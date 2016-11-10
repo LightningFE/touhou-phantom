@@ -1,0 +1,50 @@
+{
+  "name": "phantom",
+  "version": "0.0.1",
+  "description": "Phantom",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "pack": "build --dir",
+    "dist": "build --win",
+    "start": "electron ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/evshiron/phantom.git"
+  },
+  "author": "evshiron",
+  "license": "AGPL-3.0",
+  "bugs": {
+    "url": "https://github.com/evshiron/phantom/issues"
+  },
+  "homepage": "https://github.com/evshiron/phantom#readme",
+  "dependencies": {
+    "babel-standalone": "^6.18.2",
+    "bluebird": "^3.4.6",
+    "body-parser": "^1.15.2",
+    "bootstrap": "^3.3.7",
+    "electron-debug": "^1.1.0",
+    "react": "^15.3.2",
+    "react-bootstrap": "^0.30.6",
+    "react-dom": "^15.3.2",
+    "react-tap-event-plugin": "^1.0.0",
+    "rpc.io": "git+https://github.com/evshiron/rpc.io.git",
+    "socket.io-client": "^1.5.1"
+  },
+  "devDependencies": {
+    "devtron": "^1.4.0",
+    "electron": "^1.4.5",
+    "electron-builder": "^8.3.0"
+  },
+  "build": {
+    "win": {
+      "appId": "run.tldr.phantom",
+      "productName": "Phantom",
+      "target": [
+        "7z",
+        "zip"
+      ]
+    }
+  }
+}

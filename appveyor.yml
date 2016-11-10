@@ -1,0 +1,19 @@
+
+environment:
+  GH_TOKEN:
+    secure: mxRp9KQ8lfdBlu+etmohFt9KuAWIwsHbRZRWKo+Vj6zrfx0et1Cvg2ZDHdob2AL8
+
+platform:
+  - x86
+
+cache:
+  - node_modules
+
+install:
+  - ps: Install-Product node Stable
+  - npm install
+
+build_script:
+  - node --version
+  - npm --version
+  - npm run dist
