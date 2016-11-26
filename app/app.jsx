@@ -190,7 +190,11 @@ class App extends Component {
             const udp = require('dgram').createSocket('udp4');
 
             // FIXME: Promisify.
-            udp.bind(0, '0.0.0.0');
+            udp.bind(0, '0.0.0.0', () => {
+
+                console.log('udp bound');
+
+            });
 
             const beating = () => {
 
@@ -249,37 +253,29 @@ class App extends Component {
 
             console.log('channel new');
 
-            let receiveChannel = null;
+            if(role == 'source') {
 
-            const sendChannel = pc.createDataChannel('sendChannel');
-            sendChannel.onopen = (event) => {
+                const channel = pc.createDataChannel('channel');
+                channel.onopen = (event) => {
 
-                console.log('channel open');
+                    console.log('channel open');
 
-                sendChannel.send(JSON.stringify({
-                    type: 'message',
-                    data: 'Hello world!',
-                }));
-
-            };
-            sendChannel.onclose = (event) => {
-                console.log('channel close');
-            };
-
-            pc.ondatachannel = (event) => {
-
-                console.log('datachannel', event.channel);
-
-                receiveChannel = event.channel;
-                receiveChannel.onmessage = (event) => {
-
-                    console.log('channel message', event.data);
-
-                    const data = JSON.parse(event.data);
+                    this.setupTunnel(channel);
 
                 };
 
-            };
+            }
+            else {
+
+                pc.ondatachannel = (event) => {
+
+                    console.log('datachannel', event.channel);
+
+                    this.setupTunnel(event.channel);
+
+                };
+
+            }
 
             pc.oniceconnectionstatechange = (event) => {
 
@@ -398,6 +394,86 @@ class App extends Component {
             });
 
         }.bind(this))();
+    }
+
+    setupTunnel(channel) {
+        return Promise.coroutine(function*() {
+
+            const udp = require('dgram').createSocket('udp4');
+
+            // FIXME: Promisify.
+            udp.bind(0, '0.0.0.0', () => {
+
+                console.log('udp bound');
+
+                this.setState({
+                    tunnelIdentity: `127.0.0.1:${ udp.address().port }`,
+                });
+
+            });
+
+            udp.on('message', (msg, rinfo) => {
+
+                channel.send(msg.toString('base64'));
+
+            });
+
+            channel.onmessage = (event) => {
+
+                console.log('channel message', event.data);
+
+                if(event.data.indexOf('{') == 0) {
+
+                    const data = JSON.parse(event.data);
+
+                    switch(data.type) {
+                    case 'echo':
+
+                        channel.send(JSON.stringify({
+                            type: 'reply',
+                            data: data.data,
+                        }));
+
+                        break;
+                    }
+
+                }
+                else {
+
+                    const buf = Buffer.from(event.data, 'base64');
+
+                    udp.send(buf, this.dest.port, this.dest.address);
+
+                }
+
+            };
+
+            const beating = () => {
+
+                channel.send(JSON.stringify({
+                    type: 'echo',
+                    data: Date.now(),
+                }));
+
+            };
+
+            channel.send(JSON.stringify({
+                type: 'message',
+                data: 'Hello world!',
+            }));
+
+            channel.onclose = (event) => {
+
+                console.log('channel close');
+
+                // TODO: Release resources.
+
+
+
+            };
+
+        }.bind(this))();
+
     }
 
     startRelaying() {
@@ -666,6 +742,7 @@ class App extends Component {
                                 <FormGroup>
                                     <ControlLabel>Tunnel Identity</ControlLabel>
                                     <FormControl type="text"
+                                        value={ this.state.tunnelIdentity }
                                         onChange={ (event) => this.setState({
                                             tunnelIdentity: event.target.value,
                                         }) }
