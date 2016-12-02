@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "pack": "build --dir",
-    "dist": "build --win",
+    "dist": "build --win --ia32",
     "start": "electron ."
   },
   "repository": {
@@ -24,6 +24,7 @@
     "bluebird": "^3.4.6",
     "body-parser": "^1.15.2",
     "bootstrap": "^3.3.7",
+    "electron-auto-updater": "^0.6.2",
     "electron-debug": "^1.1.0",
     "react": "^15.3.2",
     "react-bootstrap": "^0.30.6",
@@ -38,13 +39,7 @@
     "electron-builder": "^8.3.0"
   },
   "build": {
-    "win": {
-      "appId": "run.tldr.phantom",
-      "productName": "Phantom",
-      "target": [
-        "7z",
-        "zip"
-      ]
-    }
+    "appId": "run.tldr.phantom",
+    "productName": "Phantom"
   }
 }
