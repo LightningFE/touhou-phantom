@@ -89,6 +89,7 @@ class App extends Component {
 
         this.io.expose('/api/tunnels/request', ({
             fromIdentity,
+            tunnelIdentity,
         }) => {
             return new Promise((resolve, reject) => {
 
@@ -96,7 +97,7 @@ class App extends Component {
 
                 if(accept) {
 
-                    this.setupRTC();
+                    this.setupRTC(null, tunnelIdentity);
 
                 }
 
@@ -238,7 +239,7 @@ class App extends Component {
         });
     }
 
-    setupRTC(role) {
+    setupRTC(role, tunnelIdentity) {
         return Promise.coroutine(function*() {
 
             this.setState({
@@ -314,8 +315,11 @@ class App extends Component {
                     console.log('icecandidate', event.candidate);
 
                     this.io.emit('tunnel', {
-                        type: 'candidate',
-                        data: event.candidate,
+                        identity: tunnelIdentity,
+                        data: {
+                            type: 'candidate',
+                            data: event.candidate,
+                        },
                     });
 
                     //const candidate = parseCandidate(event.candidate.candidate);
@@ -340,15 +344,27 @@ class App extends Component {
                 pc.setLocalDescription(desc);
 
                 this.io.emit('tunnel', {
-                    type: 'sdp',
-                    data: desc,
+                    identity: tunnelIdentity,
+                    data: {
+                        type: 'sdp',
+                        data: desc,
+                    },
                 });
 
             }
 
             this.io.on('tunnel', ({
-                type, data,
+                identity,
+                data: {
+                    type, data,
+                },
             }) => {
+
+                if(identity != tunnelIdentity) {
+                    return;
+                }
+
+                //console.log('tunnel', identity, type, data);
 
                 switch(type) {
                 case 'sdp':
@@ -371,8 +387,11 @@ class App extends Component {
                                     pc.setLocalDescription(desc);
 
                                     this.io.emit('tunnel', {
-                                        type: 'sdp',
-                                        data: desc,
+                                        identity,
+                                        data: {
+                                            type: 'sdp',
+                                            data: desc,
+                                        },
                                     });
 
                                 });
@@ -547,13 +566,14 @@ class App extends Component {
             })
             .then(({
                 accept,
+                tunnelIdentity,
             }) => {
 
                 alert(`${ accept ? 'Accepted' : 'Denied' }.`);
 
                 if(accept) {
 
-                    this.setupRTC('source');
+                    this.setupRTC('source', tunnelIdentity);
 
                 }
 
