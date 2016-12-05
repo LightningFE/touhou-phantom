@@ -4,7 +4,7 @@ const { clipboard } = require('electron');
 import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
 
-import { Panel, Grid, Col, Row, Navbar, Nav, NavItem, FormGroup, ControlLabel, InputGroup, FormControl, ProgressBar, Button, DropdownButton, MenuItem, Glyphicon } from 'react-bootstrap';
+import { Panel, Grid, Col, Row, Navbar, Nav, NavItem, Tabs, Tab, Table, FormGroup, ControlLabel, InputGroup, FormControl, ProgressBar, Button, DropdownButton, MenuItem, Glyphicon } from 'react-bootstrap';
 
 const SocketIOClient = require('socket.io-client');
 
@@ -30,6 +30,27 @@ function parseCandidate(text) {
 
 }
 
+class Tunnel {
+
+    constructor({
+        role, peerId, identity,
+    }) {
+
+        this.role = role;
+        this.peerId = peerId;
+        this.identity = identity;
+
+        this.state = 'UNKNOWN';
+
+        this.connection = null;
+        this.channel = null;
+
+        this.localAddress = null;
+
+    }
+
+}
+
 class App extends Component {
 
     constructor(props) {
@@ -49,7 +70,8 @@ class App extends Component {
             selectedWareName: '',
             relayState: 'UNKNOWN',
             relayAddress: '',
-            tunnelState: 'UNKNOWN',
+            tunnels: [],
+            peerId: '',
         };
 
         this.io = new SocketIOClient(this.remoteUrl);
@@ -97,7 +119,7 @@ class App extends Component {
 
                 if(accept) {
 
-                    this.setupRTC(null, tunnelIdentity);
+                    this.setupTunnel(null, fromIdentity, tunnelIdentity);
 
                 }
 
@@ -239,17 +261,38 @@ class App extends Component {
         });
     }
 
-    setupRTC(role, tunnelIdentity) {
+    setupTunnel(role, peerId, tunnelIdentity) {
         return Promise.coroutine(function*() {
 
-            this.setState({
-                tunnelState: 'TUNNEL_STARTED',
+            const tunnel = new Tunnel({
+                role, peerId,
+                identity: tunnelIdentity,
             });
+
+            const updateTunnelState = () => {
+                this.setState({
+                    tunnels: this.state.tunnels.map((t) => {
+                        if(t.tunnelIdentity == tunnelIdentity) {
+                            return tunnel;
+                        }
+                        else {
+                            return t;
+                        }
+                    }),
+                });
+            };
 
             const pc = new RTCPeerConnection({
                 iceServers: [{
                     urls: 'turn:106.185.35.36:3478',
                 }],
+            });
+
+            tunnel.connection = pc;
+            tunnel.state = 'STARTED';
+
+            this.setState({
+                tunnels: [...this.state.tunnels, tunnel],
             });
 
             console.log('channel new');
@@ -261,7 +304,10 @@ class App extends Component {
 
                     console.log('channel open');
 
-                    this.setupTunnel(role, channel);
+                    tunnel.channel = channel;
+                    updateTunnelState();
+
+                    this.setupChannel(tunnel, channel, updateTunnelState);
 
                 };
 
@@ -272,7 +318,10 @@ class App extends Component {
 
                     console.log('datachannel', event.channel);
 
-                    this.setupTunnel(role, event.channel);
+                    tunnel.channel = event.channel;
+                    updateTunnelState();
+
+                    this.setupChannel(tunnel, event.channel, updateTunnelState);
 
                 };
 
@@ -280,31 +329,20 @@ class App extends Component {
 
             pc.oniceconnectionstatechange = (event) => {
 
-                let tunnelState = null;
-
                 switch(pc.iceConnectionState) {
                 case 'checking':
-                    tunnelState = 'TUNNEL_CHECKING';
+                    tunnel.state = 'CHECKING';
                     break;
                 case 'connected':
                 case 'completed':
-                    tunnelState = 'TUNNEL_CONNECTED';
-
-                    window.pc = pc;
-
+                    tunnel.state = 'CONNECTED';
                     break;
                 case 'disconnected':
-                    tunnelState = 'TUNNEL_DISCONNECTED';
+                    tunnel.state = 'DISCONNECTED';
                     break;
                 }
 
-                if(tunnelState) {
-
-                    this.setState({
-                        tunnelState,
-                    });
-
-                }
+                updateTunnelState();
 
             };
 
@@ -415,7 +453,7 @@ class App extends Component {
         }.bind(this))();
     }
 
-    setupTunnel(role, channel) {
+    setupChannel(tunnel, channel, updateTunnelState) {
         return Promise.coroutine(function*() {
 
             const source = {
@@ -430,19 +468,14 @@ class App extends Component {
 
                 console.log('udp bound');
 
-                if(role == 'source') {
-
-                    this.setState({
-                        tunnelIdentity: `127.0.0.1:${ udp.address().port }`,
-                    });
-
-                }
+                tunnel.localAddress = `127.0.0.1:${ udp.address().port }`;
+                updateTunnelState();
 
             });
 
             udp.on('message', (msg, rinfo) => {
 
-                if(role == 'source' && !source.address && !source.port) {
+                if(tunnel.role == 'source' && !source.address && !source.port) {
 
                     source.address = rinfo.address;
                     source.port = rinfo.port;
@@ -477,7 +510,7 @@ class App extends Component {
 
                     const buf = Buffer.from(event.data, 'base64');
 
-                    if(role == 'source') {
+                    if(tunnel.role == 'source') {
 
                         if(source.address && source.port) {
 
@@ -591,7 +624,7 @@ class App extends Component {
     startTunneling() {
         return new Promise((resolve, reject) => {
 
-            const toIdentity = parseInt(this.state.tunnelIdentity);
+            const toIdentity = parseInt(this.state.peerId);
 
             this.io.exec('/api/tunnels/request', {
                 toIdentity,
@@ -605,7 +638,7 @@ class App extends Component {
 
                 if(accept) {
 
-                    this.setupRTC('source', tunnelIdentity);
+                    this.setupTunnel('source', toIdentity, tunnelIdentity);
 
                 }
 
@@ -635,6 +668,14 @@ class App extends Component {
 
     }
 
+    onTunnelCopyClick(localAddress) {
+
+        clipboard.writeText(localAddress);
+
+        alert(`"${ localAddress }" is copied.`);
+
+    }
+
     onTunnelClick() {
 
         this.startTunneling();
@@ -643,13 +684,15 @@ class App extends Component {
 
     render() {
 
-        const servers = this.state.wares.map((ware) => {
-            return <MenuItem
-                active={ this.state.selectedWareName == ware.name }
-                onClick={ () => this.setState({
-                    selectedWareName: ware.name,
-                }) }
-            ><span title={ ware.name }>{ ware.address }</span> - <span>{ ware.delta }ms</span></MenuItem>
+        const relayServers = this.state.wares.map((ware) => {
+            return (
+                <MenuItem
+                    active={ this.state.selectedWareName == ware.name }
+                    onClick={ () => this.setState({
+                        selectedWareName: ware.name,
+                    }) }
+                ><span title={ ware.name }>{ ware.address }</span> - <span>{ ware.delta }ms</span></MenuItem>
+            );
         });
 
         const relayProgressNow = (() => {
@@ -683,46 +726,54 @@ class App extends Component {
 
         })();
 
-        const tunnelProgressNow = (() => {
-            switch(this.state.tunnelState) {
-            case 'UNKNOWN':
-                return 0;
-            case 'TUNNEL_STARTED':
-                return 25;
-            case 'TUNNEL_CHECKING':
-                return 50;
-            case 'TUNNEL_CONNECTED':
-            case 'TUNNEL_DISCONNECTED':
-            case 'TUNNEL_DONE':
-            default:
-                return 100;
-            }
-        })();
-
-        const tunnelProgressStyle = (() => {
-
-            if(this.state.tunnelState.includes('ERROR')) {
-                return 'danger';
-            }
-
-            if(this.state.tunnelState == 'TUNNEL_DISCONNECTED') {
-                return 'danger';
-            }
-
-            switch(this.state.tunnelState) {
-            case 'TUNNEL_CONNECTED':
-            case 'TUNNEL_DONE':
-                return 'success';
-            default:
-                return null;
-            }
-
-        })();
+        const tunnelTabs = this.state.tunnels.map((tunnel, idx) => {
+            return (
+                <Tab title={ `${ tunnel.peerId } - ${ tunnel.state }` }
+                    eventKey={ idx + 1 }
+                >
+                    <Panel
+                        className="tab-panel"
+                    >
+                        <Table
+                            striped={ true }
+                            bordered={ true }
+                            condensed={ true }
+                            hover={ true }
+                        >
+                            <tbody>
+                                <tr>
+                                    <td>Source</td>
+                                    <td>{ tunnel.role == 'source' ? 'True' : 'False' }</td>
+                                </tr>
+                                <tr>
+                                    <td>Peer Id</td>
+                                    <td>{ tunnel.peerId }</td>
+                                </tr>
+                                <tr>
+                                    <td>Identity</td>
+                                    <td>{ tunnel.identity }</td>
+                                </tr>
+                                <tr>
+                                    <td>State</td>
+                                    <td>{ tunnel.state }</td>
+                                </tr>
+                                <tr>
+                                    <td>Local Address</td>
+                                    <td>
+                                        <span>{ tunnel.localAddress }</span> - <a onClick={ this.onTunnelCopyClick.bind(this, tunnel.localAddress) }>Copy</a>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </Table>
+                    </Panel>
+                </Tab>
+            );
+        });
 
         return (
             <div>
-                <Navbar
-                    inverse={ true }
+                <Navbar inverse={ true }
+                    fixedTop={ true }
                 >
                     <Navbar.Header>
                         <Navbar.Brand>{ this.title }#{ this.state.identity }</Navbar.Brand>
@@ -734,94 +785,107 @@ class App extends Component {
                         </Nav>
                     </Navbar.Collapse>
                 </Navbar>
-                <Panel header="Relaying">
-                    <Grid>
-                        <Row>
-                            <Col sm={ 12 }>
-                                <FormGroup>
-                                    <ControlLabel>Relay Address</ControlLabel>
-                                    <InputGroup>
-                                        <InputGroup.Button>
-                                            <DropdownButton>
-                                                <MenuItem header={ true }>Servers</MenuItem>
-                                                <MenuItem
-                                                    active={ this.state.selectedWareName == '' }
-                                                    onClick={ () => this.setState({
-                                                        selectedWareName: '',
-                                                    }) }
-                                                >Auto</MenuItem>
-                                                { servers }
-                                            </DropdownButton>
-                                        </InputGroup.Button>
-                                        <FormControl type="text"
-                                            value={ this.state.relayAddress }
-                                        />
-                                        <InputGroup.Button>
-                                            <Button
-                                                onClick={ this.onRelayCopyClick.bind(this) }
-                                            >
-                                                <Glyphicon glyph="copy" />
-                                            </Button>
-                                        </InputGroup.Button>
-                                    </InputGroup>
-                                </FormGroup>
-                            </Col>
-                        </Row>
-                        <Row>
-                            <Col sm={ 12 }>
-                                <ProgressBar
-                                    label={ this.state.relayState }
-                                    now={ relayProgressNow }
-                                    active={ relayProgressNow > 0 && relayProgressNow < 100 }
-                                    bsStyle={ relayProgressStyle }
-                                />
-                            </Col>
-                        </Row>
-                        <Row>
-                            <Col sm={ 12 }>
-                                <Button
-                                    onClick={ this.onRelayClick.bind(this) }
-                                    bsStyle="primary"
-                                >Relay</Button>
-                            </Col>
-                        </Row>
-                    </Grid>
-                </Panel>
-                <Panel header="Tunneling">
-                    <Grid>
-                        <Row>
-                            <Col sm={ 12 }>
-                                <FormGroup>
-                                    <ControlLabel>Tunnel Identity</ControlLabel>
-                                    <FormControl type="text"
-                                        value={ this.state.tunnelIdentity }
-                                        onChange={ (event) => this.setState({
-                                            tunnelIdentity: event.target.value,
-                                        }) }
-                                    />
-                                </FormGroup>
-                            </Col>
-                        </Row>
-                        <Row>
-                            <Col sm={ 12 }>
-                                <ProgressBar
-                                    label={ this.state.tunnelState }
-                                    now={ tunnelProgressNow }
-                                    active={ tunnelProgressNow > 0 && tunnelProgressNow < 100 }
-                                    bsStyle={ tunnelProgressStyle }
-                                />
-                            </Col>
-                        </Row>
-                        <Row>
-                            <Col sm={ 12 }>
-                                <Button
-                                    onClick={ this.onTunnelClick.bind(this) }
-                                    bsStyle="primary"
-                                >Tunnel</Button>
-                            </Col>
-                        </Row>
-                    </Grid>
-                </Panel>
+                <div
+                    className="body"
+                >
+                    <Tabs bsStyle="pills"
+                        defaultActiveKey={ 0 }
+                        animation={ false }
+                    >
+                        <Tab title="Relaying"
+                            eventKey={ 0 }
+                        >
+                            <Panel
+                                className="tab-panel"
+                            >
+                                <Grid>
+                                    <Row>
+                                        <Col sm={ 12 }>
+                                            <FormGroup>
+                                                <ControlLabel>Relay Address</ControlLabel>
+                                                <InputGroup>
+                                                    <InputGroup.Button>
+                                                        <DropdownButton>
+                                                            <MenuItem header={ true }>Servers</MenuItem>
+                                                            <MenuItem
+                                                                active={ this.state.selectedWareName == '' }
+                                                                onClick={ () => this.setState({
+                                                                    selectedWareName: '',
+                                                                }) }
+                                                            >Auto</MenuItem>
+                                                            { relayServers }
+                                                        </DropdownButton>
+                                                    </InputGroup.Button>
+                                                    <FormControl type="text"
+                                                        value={ this.state.relayAddress }
+                                                    />
+                                                    <InputGroup.Button>
+                                                        <Button
+                                                            onClick={ this.onRelayCopyClick.bind(this) }
+                                                        >
+                                                            <Glyphicon glyph="copy" />
+                                                        </Button>
+                                                        <Button
+                                                            onClick={ this.onRelayClick.bind(this) }
+                                                        >Relay</Button>
+                                                    </InputGroup.Button>
+                                                </InputGroup>
+                                            </FormGroup>
+                                        </Col>
+                                    </Row>
+                                    <Row>
+                                        <Col sm={ 12 }>
+                                            <ProgressBar
+                                                label={ this.state.relayState }
+                                                now={ relayProgressNow }
+                                                active={ relayProgressNow > 0 && relayProgressNow < 100 }
+                                                bsStyle={ relayProgressStyle }
+                                            />
+                                        </Col>
+                                    </Row>
+                                </Grid>
+                            </Panel>
+                        </Tab>
+                        <Tab title="Tunneling"
+                            eventKey={ 1 }
+                        >
+                            <Panel
+                                className="tab-panel"
+                            >
+                                <Tabs bsStyle="pills"
+                                    defaultActiveKey={ 0 }
+                                    animation={ false }
+                                >
+                                    <Tab title="+"
+                                        eventKey={ 0 }
+                                    >
+                                        <Panel
+                                            className="tab-panel"
+                                        >
+                                            <FormGroup>
+                                                <ControlLabel>Peer Id</ControlLabel>
+                                                <InputGroup>
+                                                    <FormControl type="text"
+                                                        value={ this.state.peerId }
+                                                        onChange={ (event) => this.setState({
+                                                            peerId: event.target.value,
+                                                        }) }
+                                                    />
+                                                    <InputGroup.Button>
+                                                        <Button
+                                                            onClick={ this.onTunnelClick.bind(this) }
+                                                        >Tunnel</Button>
+                                                    </InputGroup.Button>
+                                                </InputGroup>
+                                            </FormGroup>
+                                        </Panel>
+                                    </Tab>
+                                    { tunnelTabs }
+                                </Tabs>
+                            </Panel>
+                        </Tab>
+                    </Tabs>
+                </div>
             </div>
         );
 
