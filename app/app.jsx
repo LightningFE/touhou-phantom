@@ -261,7 +261,7 @@ class App extends Component {
 
                     console.log('channel open');
 
-                    this.setupTunnel(channel);
+                    this.setupTunnel(role, channel);
 
                 };
 
@@ -272,7 +272,7 @@ class App extends Component {
 
                     console.log('datachannel', event.channel);
 
-                    this.setupTunnel(event.channel);
+                    this.setupTunnel(role, event.channel);
 
                 };
 
@@ -415,8 +415,13 @@ class App extends Component {
         }.bind(this))();
     }
 
-    setupTunnel(channel) {
+    setupTunnel(role, channel) {
         return Promise.coroutine(function*() {
+
+            const source = {
+                address: null,
+                port: null,
+            };
 
             const udp = require('dgram').createSocket('udp4');
 
@@ -425,13 +430,24 @@ class App extends Component {
 
                 console.log('udp bound');
 
-                this.setState({
-                    tunnelIdentity: `127.0.0.1:${ udp.address().port }`,
-                });
+                if(role == 'source') {
+
+                    this.setState({
+                        tunnelIdentity: `127.0.0.1:${ udp.address().port }`,
+                    });
+
+                }
 
             });
 
             udp.on('message', (msg, rinfo) => {
+
+                if(role == 'source' && !source.address && !source.port) {
+
+                    source.address = rinfo.address;
+                    source.port = rinfo.port;
+
+                }
 
                 channel.send(msg.toString('base64'));
 
@@ -461,7 +477,23 @@ class App extends Component {
 
                     const buf = Buffer.from(event.data, 'base64');
 
-                    udp.send(buf, this.dest.port, this.dest.address);
+                    if(role == 'source') {
+
+                        if(source.address && source.port) {
+
+                            udp.send(buf, source.port, source.address);
+
+                        }
+                        else {
+                            console.warn('WARN_NO_SOURCE');
+                        }
+
+                    }
+                    else {
+
+                        udp.send(buf, this.dest.port, this.dest.address);
+
+                    }
 
                 }
 
