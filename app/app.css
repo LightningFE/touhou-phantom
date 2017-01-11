@@ -1,9 +1,8 @@
 
-.body {
-    margin: 24px;
-    margin-top: 72px;
+* {
+    font-family: "msyh", "Microsoft YaHei", "微软雅黑" !important;
 }
 
-.tab-panel {
-    margin: 16px 8px 8px 8px;
+body {
+    margin: 0;
 }

@@ -9,7 +9,7 @@ var mainWindow = null;
 function openWindow() {
 
 	mainWindow = new BrowserWindow({
-        width: 640,
+        width: 320,
         height: 480,
     });
 
