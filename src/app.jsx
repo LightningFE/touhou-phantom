@@ -14,11 +14,17 @@ import IconDisconnected from 'material-ui/svg-icons/device/signal-cellular-0-bar
 
 import RelayingComponent from './components/relaying';
 import TunnelingComponent from './components/tunneling';
+import ToolboxComponent from './components/toolbox';
+import HelpComponent from './components/help';
+import AboutComponent from './components/about';
 
 const phantom = require('./phantom');
 
 const CONTENT_RELAYING = Symbol('CONTENT_RELAYING');
 const CONTENT_TUNNELING = Symbol('CONTENT_TUNNELING');
+const CONTENT_TOOLBOX = Symbol('CONTENT_TOOLBOX');
+const CONTENT_HELP = Symbol('CONTENT_HELP');
+const CONTENT_ABOUT = Symbol('CONTENT_ABOUT');
 
 function parseCandidate(text) {
 
@@ -45,7 +51,7 @@ class App extends Component {
 
         this.state = {
             drawerShowed: true,
-            content: '',
+            content: CONTENT_HELP,
             connected: false,
             identity: '',
         };
@@ -148,12 +154,12 @@ class App extends Component {
                         <Divider />
                         <MenuItem onTouchTap={ () => { this.toggleDrawer(); this.setContent(CONTENT_RELAYING); } }>中转服务</MenuItem>
                         <MenuItem onTouchTap={ () => { this.toggleDrawer(); this.setContent(CONTENT_TUNNELING); } }>穿透服务</MenuItem>
-                        <MenuItem onTouchTap={ this.toggleDrawer.bind(this) }>其它</MenuItem>
+                        <MenuItem onTouchTap={ () => { this.toggleDrawer(); this.setContent(CONTENT_TOOLBOX); } }>工具箱</MenuItem>
                         <Divider />
                         <MenuItem checked={ true }>东方非想天则</MenuItem>
                         <Divider />
-                        <MenuItem onTouchTap={ this.toggleDrawer.bind(this) }>帮助</MenuItem>
-                        <MenuItem onTouchTap={ this.toggleDrawer.bind(this) }>关于</MenuItem>
+                        <MenuItem onTouchTap={ () => { this.toggleDrawer(); this.setContent(CONTENT_HELP); } }>帮助</MenuItem>
+                        <MenuItem onTouchTap={ () => { this.toggleDrawer(); this.setContent(CONTENT_ABOUT); } }>关于</MenuItem>
                     </Drawer>
                     <div style={{
                         margin: 8,
@@ -168,9 +174,23 @@ class App extends Component {
                                 return (
                                     <TunnelingComponent />
                                 );
+                            case CONTENT_HELP:
+                                return (
+                                    <HelpComponent />
+                                );
+                            case CONTENT_ABOUT:
+                                return (
+                                    <AboutComponent />
+                                );
+                            /*
+                            case CONTENT_TOOLBOX:
+                                return (
+                                    <ToolboxComponent />
+                                );
+                            */
                             default:
                                 return (
-                                    <div>Empty.</div>
+                                    <div>ERROR_PAGE_NOT_FOUND</div>
                                 );
                             }
                         })() }
