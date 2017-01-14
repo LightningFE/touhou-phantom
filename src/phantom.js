@@ -3,6 +3,8 @@ const { EventEmitter } = require('events');
 
 const Tunnel = require('./lib/tunnel');
 
+const { confirmEx } = require('./util');
+
 const RELAY_STATE_STARTED = Symbol.for('RELAY_STATE_STARTED');
 const RELAY_STATE_DONE = Symbol.for('RELAY_STATE_DONE');
 
@@ -93,17 +95,21 @@ class Phantom extends EventEmitter {
         }) => {
             return new Promise((resolve, reject) => {
 
-                const accept = confirm(`Tunneling with ${ fromIdentity }?`);
+                confirmEx(`Tunneling with ${ fromIdentity }?`)
+                .then((accept) => {
 
-                if(accept) {
+                    if(accept) {
 
-                    this.createTunnel(null, fromIdentity, tunnelIdentity);
+                        this.createTunnel(null, fromIdentity, tunnelIdentity);
 
-                }
+                    }
 
-                resolve({
-                    accept,
-                });
+                    resolve({
+                        accept,
+                    });
+
+                })
+                .catch((err) => reject(err));
 
             });
         });
@@ -318,8 +324,6 @@ class Phantom extends EventEmitter {
                 tunnelIdentity,
             }) => {
 
-                alert(`${ accept ? 'Accepted' : 'Denied' }.`);
-
                 if(accept) {
 
                     this.createTunnel('source', toIdentity, tunnelIdentity);
@@ -334,7 +338,7 @@ class Phantom extends EventEmitter {
     }
 
     createTunnel(role, peerId, identity) {
-        
+
         const tunnel = new Tunnel({
             phantom: this,
             role, peerId, identity,

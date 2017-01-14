@@ -20,6 +20,7 @@ export default class TunnelingComponent extends Component {
         this.state = {
             tunnelInfos: [],
             peerId: '',
+            tunnelBooting: false,
         };
 
     }
@@ -62,7 +63,22 @@ export default class TunnelingComponent extends Component {
     }
 
     onConnectClick() {
-        phantom.startTunnel(this.state.peerId);
+
+        this.setState({
+            tunnelBooting: true,
+        });
+
+        phantom.startTunnel(this.state.peerId)
+        .then((accept) => {
+
+            this.setState({
+                tunnelBooting: false,
+            });
+
+            alert(`${ accept ? 'Accepted' : 'Denied' }.`);
+
+        });
+
     }
 
     render() {
@@ -83,6 +99,7 @@ export default class TunnelingComponent extends Component {
                 );
                 break;
             case Symbol.for('TUNNEL_STATE_CONNECTED'):
+            case Symbol.for('TUNNEL_STATE_DONE'):
                 stateIcon = (
                     <IconDone />
                 );
@@ -98,7 +115,7 @@ export default class TunnelingComponent extends Component {
                 <ListItem primaryText={ tunnelInfo.peerId } leftIcon={ <IconFace /> } />,
             ];
 
-            if(tunnelInfo.localAddress) {
+            if(tunnelInfo.role == 'source') {
                 nestedItems.push(
                     <ListItem primaryText={ tunnelInfo.localAddress } leftIcon={ <IconWifiTethering /> } rightIcon={ <IconContentCopy /> } onTouchTap={ this.copyAddress.bind(this, tunnelInfo.localAddress) } />
                 );
@@ -118,7 +135,13 @@ export default class TunnelingComponent extends Component {
                 </List>
                 <div>
                     <TextField hintText="PeerId" onChange={ this.onPeerIdChange.bind(this) } /><br />
-                    <RaisedButton onTouchTap={ this.onConnectClick.bind(this) }>连接</RaisedButton>
+                    <div>
+                        {
+                            this.state.tunnelBooting
+                            ? <CircularProgress />
+                            : <RaisedButton onTouchTap={ this.onConnectClick.bind(this) }>连接</RaisedButton>
+                        }
+                    </div>
                 </div>
             </Paper>
         );
