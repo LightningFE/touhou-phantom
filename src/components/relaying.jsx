@@ -19,6 +19,8 @@ export default class RelayingComponent extends Component {
             relayInfo: {
                 address: '',
                 port: -1,
+                deltas: [],
+                delta: -1,
             },
             wareSelected: 'auto',
         };
@@ -26,6 +28,12 @@ export default class RelayingComponent extends Component {
     }
 
     componentDidMount() {
+
+        phantom.on('relayUpdate', (relayInfo) => {
+            this.setState({
+                relayInfo,
+            });
+        });
 
         this.updateWares();
 

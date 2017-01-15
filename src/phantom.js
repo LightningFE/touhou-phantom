@@ -20,12 +20,25 @@ class WareInfo {
 }
 
 class RelayInfo {
+
     constructor({
         address, port,
     }) {
         this.address = address;
         this.port = port;
+        this.deltas = Array(30).fill(0);
+        this.delta = 0;
     }
+
+    updateDelta(delta) {
+
+        this.deltas.shift();
+        this.deltas.push(delta);
+
+        this.delta = delta;
+
+    }
+
 }
 
 class TunnelInfo {
@@ -282,8 +295,19 @@ class Phantom extends EventEmitter {
 
                     if(msg.indexOf('#PHANTOM') == 0) {
 
-                        // TODO: Calculate delay.
+                        if(!this.relayInfo) {
+                            console.error('ERROR_NO_RELAY_INFO');
+                            return;
+                        }
 
+                        const now = Date.now();
+
+                        const text = msg.toString('utf-8');
+                        const time = parseInt(text.split(' ')[1]);
+
+                        this.relayInfo.updateDelta(now - time);
+
+                        this.emit('relayUpdate', this.relayInfo);
 
                     }
                     else {
