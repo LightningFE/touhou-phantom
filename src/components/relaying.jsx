@@ -5,6 +5,8 @@ import React, { Component } from 'react';
 import { Paper, SelectField, MenuItem, TextField, RaisedButton, IconButton, CircularProgress } from 'material-ui';
 import IconContentCopy from 'material-ui/svg-icons/content/content-copy';
 
+import StatsView from './views/stats';
+
 const phantom = require('../phantom');
 
 export default class RelayingComponent extends Component {
@@ -15,6 +17,7 @@ export default class RelayingComponent extends Component {
         this.state = {
             wareUpdating: false,
             wareInfos: [],
+            wareSelected: 'auto',
             relayBooting: false,
             relayInfo: {
                 address: '',
@@ -22,7 +25,6 @@ export default class RelayingComponent extends Component {
                 deltas: [],
                 delta: -1,
             },
-            wareSelected: 'auto',
         };
 
     }
@@ -30,9 +32,15 @@ export default class RelayingComponent extends Component {
     componentDidMount() {
 
         phantom.on('relayUpdate', (relayInfo) => {
+
             this.setState({
                 relayInfo,
             });
+
+            if(this.refs.stats) {
+                this.refs.stats.update(relayInfo.delta);
+            }
+
         });
 
         this.updateWares();
@@ -159,7 +167,12 @@ export default class RelayingComponent extends Component {
                         {
                             this.state.relayBooting
                             ? <CircularProgress />
-                            : <RaisedButton onTouchTap={ this.onRelayClick.bind(this) }>中转</RaisedButton>
+                            : <div>
+                                <RaisedButton onTouchTap={ this.onRelayClick.bind(this) }>中转</RaisedButton><br />
+                                <StatsView ref="stats" style={{
+                                    marginTop: 8,
+                                }} />
+                            </div>
                         }
                     </div>
                 </div>

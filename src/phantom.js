@@ -325,7 +325,7 @@ class Phantom extends EventEmitter {
 
             });
 
-            // TODO: Release resources.
+            // FIXME: Release resources.
 
 
             setInterval(beating, 1000);
