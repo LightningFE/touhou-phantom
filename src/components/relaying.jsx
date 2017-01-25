@@ -129,7 +129,7 @@ export default class RelayingComponent extends Component {
 
         const wareItems = this.state.wareInfos.map((wareInfo, idx) => {
             return (
-                <MenuItem key={ idx } primaryText={ `${ wareInfo.address } - ${ wareInfo.delta }ms` } value={ wareInfo.name } />
+                <MenuItem key={ idx } primaryText={ `${ wareInfo.address } - ${ wareInfo.delta.toFixed(2) }ms` } value={ wareInfo.name } />
             );
         })
 
@@ -161,7 +161,7 @@ export default class RelayingComponent extends Component {
                                 <IconContentCopy />
                             </IconButton>
                         </div>
-                        <TextField hintText="点击「中转」获取中转地址" value={ `${ this.state.relayInfo.address }:${ this.state.relayInfo.port }` } disabled={ true } />
+                        <TextField hintText="点击「中转」获取中转地址" value={ this.state.relayInfo && this.state.relayInfo.port > 0 ? `${ this.state.relayInfo.address }:${ this.state.relayInfo.port }` : '' } disabled={ true } />
                     </div>
                     <div>
                         {

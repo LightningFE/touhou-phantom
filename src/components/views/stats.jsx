@@ -13,15 +13,19 @@ export default class StatsView extends Component {
 
         this.max = 48;
 
+        this.fgStyle = 'rgb(0, 188, 212)';
+
         this.state = {
             delta: -1,
+            maxDelta: -1,
         };
 
     }
 
     update(delta) {
 
-        this.max = delta > this.max ? delta : this.max;
+        const maxDelta = this.max * 0.7 + delta * 0.3 + 24 - this.max;
+        this.max = this.max + maxDelta;
 
         const height = this.height * delta / this.max;
 
@@ -38,7 +42,7 @@ export default class StatsView extends Component {
         ctx.fillRect(this.width - this.offset, 0, this.offset, this.height);
 
         // Draw new rect.
-        ctx.fillStyle = 'black';
+        ctx.fillStyle = this.fgStyle;
         ctx.fillRect(this.width - this.offset, this.height - height, this.offset, height);
 
         //ctx.fillRect(0, 0, this.width, this.height);
@@ -47,6 +51,7 @@ export default class StatsView extends Component {
 
         this.setState({
             delta,
+            maxDelta: Math.abs(maxDelta),
         });
 
     }
@@ -57,7 +62,7 @@ export default class StatsView extends Component {
                 <span style={{
                     position: 'absolute',
                     zIndex: 1,
-                }}>{ `${ this.state.delta }ms` }</span>
+                }}>{ this.state.delta > 0 && this.state.maxDelta > 0 ? `${ this.state.delta } ± ${ this.state.maxDelta.toFixed(2) } ms` : '未连接' }</span>
                 <canvas ref="canvas" width={ this.width } height={ this.height } style={{
                     width: this.width,
                     height: this.height,

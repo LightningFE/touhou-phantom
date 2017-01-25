@@ -22,8 +22,9 @@ class WareInfo {
 class RelayInfo {
 
     constructor({
-        address, port,
+        socket, address, port,
     }) {
+        this.socket = socket;
         this.address = address;
         this.port = port;
         this.deltas = Array(30).fill(0);
@@ -224,16 +225,20 @@ class Phantom extends EventEmitter {
 
             }
 
+            if(this.relayInfo) {
+                yield this.destroyRelay();
+            }
+
             const { address, port } = yield this.io.exec('/api/repeats/new', {
                 wareName,
             });
 
-            yield this.setupRelay({
+            const socket = yield this.setupRelay({
                 address, port,
             });
 
             this.relayInfo = new RelayInfo({
-                address, port,
+                socket, address, port,
             });
 
             this.emit('relayDone', this.relayInfo);
@@ -273,10 +278,10 @@ class Phantom extends EventEmitter {
     }) {
         return new Promise((resolve, reject) => {
 
-            const udp = require('dgram').createSocket('udp4');
+            const socket = require('dgram').createSocket('udp4');
 
             // FIXME: Promisify.
-            udp.bind(0, '0.0.0.0', () => {
+            socket.bind(0, '0.0.0.0', () => {
 
                 console.log('udp bound');
 
@@ -284,12 +289,12 @@ class Phantom extends EventEmitter {
 
             const beating = () => {
 
-                udp.send(Buffer.from(`#PHANTOM ${ Date.now() }`), port, address);
+                socket.send(Buffer.from(`#PHANTOM ${ Date.now() }`), port, address);
 
             };
 
             // TODO:
-            udp.on('message', (msg, rinfo) => {
+            socket.on('message', (msg, rinfo) => {
 
                 if(rinfo.address == address && rinfo.port == port) {
 
@@ -312,27 +317,49 @@ class Phantom extends EventEmitter {
                     }
                     else {
 
-                        udp.send(msg, this.dest.port, this.dest.address);
+                        socket.send(msg, this.dest.port, this.dest.address);
 
                     }
 
                 }
                 else if(rinfo.address == this.dest.address && rinfo.port == this.dest.port) {
 
-                    udp.send(msg, port, address);
+                    socket.send(msg, port, address);
 
                 }
 
             });
 
-            // FIXME: Release resources.
+            const beatingHandle = setInterval(beating, 300);
 
+            socket.on('close', () => {
 
-            setInterval(beating, 1000);
+                clearInterval(beatingHandle);
 
-            resolve();
+            });
+
+            resolve(socket);
 
         });
+    }
+
+    destroyRelay() {
+        return Promise.coroutine(function*() {
+
+            if(this.relayInfo) {
+
+                yield new Promise((resolve, reject) => {
+                    this.relayInfo.socket.close(resolve);
+                });
+
+                this.relayInfo = null;
+
+            }
+            else {
+                resolve();
+            }
+
+        }.bind(this))();
     }
 
     startTunnel(peerId) {
