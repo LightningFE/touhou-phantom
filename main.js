@@ -1,6 +1,6 @@
 
-var { app, dialog, BrowserWindow } = require('electron');
-var { autoUpdater } = require('electron-auto-updater');
+const { app, dialog, BrowserWindow } = require('electron');
+const NsisAutoUpdater = require('./updater');
 
 require('electron-debug')();
 
@@ -31,47 +31,82 @@ function openWindow() {
 
 function checkUpdate() {
 
-	if(process.platform != 'win32') {
-		return;
-	}
+	const autoUpdater = new NsisAutoUpdater({
+		baseUrl: 'http://tldr.run:1337/',
+		channel: 'latest',
+	});
 
 	autoUpdater.on('error', (err) => {
 		console.error(err);
 	});
 
-	autoUpdater.on('checking-for-update', () => {
-		console.log('checking-for-update');
-	});
+	autoUpdater.checkForUpdates()
+	.then(({
+		version, upgradable, file,
+	}) => {
+		return new Promise((resolve, reject) => {
 
-	autoUpdater.on('update-available', () => {
-		console.log('update-available');
-	});
+			if(upgradable) {
 
-	autoUpdater.on('update-not-available', () => {
-		console.log('update-not-available');
-	});
+				dialog.showMessageBox(mainWindow, {
+					message: `New version of ${ version } is available, download now?`,
+					buttons: [ 'Yes', 'No' ],
+					cancelId: 1,
+				}, (response) => {
+					resolve({
+						response, file,
+					});
+				});
 
-	autoUpdater.on('update-downloaded', (event, releaseNotes, releaseName, releaseDate, updateURL) => {
-
-		console.log('update-downloaded');
-
-		dialog.showMessageBox(mainWindow, {
-			message: `New version of ${ releaseName } is available, install now?`,
-			buttons: [ 'Yes', 'No' ],
-			cancelId: 1,
-		}, (response) => {
-
-			if(response != 0) {
-				return;
 			}
 
-			autoUpdater.quitAndInstall();
+		});
+	})
+	.then(({
+		response, file,
+	}) => {
+		return new Promise((resolve, reject) => {
+
+			if(response == 0) {
+
+				autoUpdater.downloadUpdate(file)
+				.then(resolve)
+				.catch(reject);
+
+			}
 
 		});
+	})
+	.then(({
+		path, version,
+	}) => {
+		return new Promise((resolve, reject) => {
 
-	});
+			dialog.showMessageBox(mainWindow, {
+				message: `Update for ${ version } is downloaded, install now?`,
+				buttons: [ 'Yes', 'No' ],
+				cancelId: 1,
+			}, (response) => {
+				resolve({
+					response, path,
+				})
+			});
 
-	autoUpdater.checkForUpdates();
+		});
+	})
+	.then(({
+		response, path,
+	}) => {
+
+		if(response == 0) {
+			autoUpdater.quitAndInstall(path);
+		}
+		else {
+			autoUpdater.installWhenQuit(path);
+		}
+
+	})
+	.catch(console.error);
 
 }
 
