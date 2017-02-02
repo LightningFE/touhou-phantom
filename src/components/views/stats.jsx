@@ -62,7 +62,7 @@ export default class StatsView extends Component {
                 <span style={{
                     position: 'absolute',
                     zIndex: 1,
-                }}>{ this.state.delta > 0 && this.state.maxDelta > 0 ? `${ this.state.delta } ± ${ this.state.maxDelta.toFixed(2) } ms` : '未连接' }</span>
+                }}>{ this.state.delta >= 0 && this.state.maxDelta >= 0 ? `${ this.state.delta } ± ${ this.state.maxDelta.toFixed(2) } ms` : '未连接' }</span>
                 <canvas ref="canvas" width={ this.width } height={ this.height } style={{
                     width: this.width,
                     height: this.height,
