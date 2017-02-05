@@ -1,6 +1,7 @@
 
 // Import once, use everywhere.
 window.Promise = require('bluebird');
+window.console = require('./lib/logger');
 
 import injectTapEventPlugin from 'react-tap-event-plugin';
 injectTapEventPlugin();
@@ -63,7 +64,7 @@ class App extends Component {
 
         document.title = this.title;
 
-        console.log(phantom);
+        console.info(phantom);
 
         this.setState({
             connected: phantom.connected,

@@ -61,14 +61,14 @@ class Tunnel extends EventEmitter {
 
             this.setState(STATE_STARTED);
 
-            console.log('channel new');
+            console.info('channel new');
 
             if(role == 'source') {
 
                 const channel = pc.createDataChannel('channel');
                 channel.onopen = (event) => {
 
-                    console.log('channel open');
+                    console.info('channel open');
 
                     this.channel = channel;
 
@@ -81,7 +81,7 @@ class Tunnel extends EventEmitter {
 
                 pc.ondatachannel = (event) => {
 
-                    console.log('datachannel', event.channel);
+                    console.info('datachannel', event.channel);
 
                     this.channel = event.channel;
 
@@ -112,7 +112,7 @@ class Tunnel extends EventEmitter {
 
                 if(event.candidate) {
 
-                    console.log('icecandidate', event.candidate);
+                    console.info('icecandidate', event.candidate);
 
                     this.phantom.io.emit('tunnel', {
                         identity: tunnelIdentity,
@@ -130,7 +130,7 @@ class Tunnel extends EventEmitter {
 
                     // Ended.
 
-                    //console.log(this.candidates);
+                    //console.info(this.candidates);
                     //pc.close();
 
                 }
@@ -164,7 +164,7 @@ class Tunnel extends EventEmitter {
                     return;
                 }
 
-                //console.log('tunnel', identity, type, data);
+                //console.info('tunnel', identity, type, data);
 
                 switch(type) {
                 case 'sdp':

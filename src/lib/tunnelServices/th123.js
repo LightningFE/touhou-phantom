@@ -34,7 +34,7 @@ class TH123Service extends EventEmitter {
                 udp.bind(0, '0.0.0.0', resolve);
             });
 
-            console.log('udp bound');
+            console.info('udp bound');
 
             this.localAddress = `127.0.0.1:${ udp.address().port }`;
 
@@ -53,7 +53,7 @@ class TH123Service extends EventEmitter {
 
             channel.onmessage = (event) => {
 
-                console.log('channel message', event.data);
+                console.info('channel message', event.data);
 
                 if(event.data.indexOf('{') == 0) {
 
@@ -113,7 +113,7 @@ class TH123Service extends EventEmitter {
 
             channel.onclose = (event) => {
 
-                console.log('channel close');
+                console.info('channel close');
 
                 // TODO: Release resources.
 

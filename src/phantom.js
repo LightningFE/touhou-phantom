@@ -256,13 +256,13 @@ class Phantom extends EventEmitter {
     updateWares() {
         return Promise.coroutine(function*() {
 
-            const { err, wares } = yield fetch(`${ this.remoteUrl }/api/wares`).then((res) => res.json());
+            const data = yield fetch(`${ this.remoteUrl }/api/wares`).then((res) => res.json());
 
-            console.log('/api/wares', err, wares);
+            console.info('/api/wares', data);
 
-            const racers = yield this.raceDelay(wares);
+            const racers = yield this.raceDelay(data.wares);
 
-            console.log('raceDelay', racers);
+            console.info('raceDelay', racers);
 
             this.wareInfos = racers.map((racer) => new WareInfo({
                 name: racer.ware.name,
@@ -288,7 +288,7 @@ class Phantom extends EventEmitter {
             // FIXME: Promisify.
             socket.bind(0, '0.0.0.0', () => {
 
-                console.log('udp bound');
+                console.info('udp bound');
 
             });
 
