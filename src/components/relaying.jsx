@@ -161,7 +161,9 @@ export default class RelayingComponent extends Component {
                                 <IconContentCopy />
                             </IconButton>
                         </div>
-                        <TextField hintText="点击「中转」获取中转地址" value={ this.state.relayInfo && this.state.relayInfo.port > 0 ? `${ this.state.relayInfo.address }:${ this.state.relayInfo.port }` : '' } disabled={ true } />
+                        <TextField hintText="点击「中转」获取中转地址" errorText={ this.state.relayInfo.state }  value={ this.state.relayInfo && this.state.relayInfo.port > 0 ? `${ this.state.relayInfo.address }:${ this.state.relayInfo.port }` : '' } disabled={ true } errorStyle={{
+                            color: 'rgb(0, 188, 212)',
+                        }} />
                     </div>
                     <div>
                         {

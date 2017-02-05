@@ -29,6 +29,7 @@ class RelayInfo {
         this.port = port;
         this.deltas = Array(30).fill(0);
         this.delta = 0;
+        this.state = null;
     }
 
     updateDelta(delta) {
@@ -305,7 +306,7 @@ class Phantom extends EventEmitter {
                     if(msg.indexOf('#PHANTOM') == 0) {
 
                         if(!this.relayInfo) {
-                            console.error('ERROR_NO_RELAY_INFO');
+                            console.error(new Error('ERROR_NO_RELAY_INFO'));
                             return;
                         }
 
@@ -315,6 +316,15 @@ class Phantom extends EventEmitter {
                         const time = parseInt(text.split(' ')[1]);
 
                         this.relayInfo.updateDelta(now - time);
+
+                        this.emit('relayUpdate', this.relayInfo);
+
+                    }
+                    else if(msg.indexOf('#PHANEVT') == 0) {
+
+                        const event = msg.toString('utf-8').split(' ')[1];
+
+                        this.relayInfo.state = event;
 
                         this.emit('relayUpdate', this.relayInfo);
 
