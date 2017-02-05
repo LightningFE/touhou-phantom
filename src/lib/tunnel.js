@@ -3,6 +3,7 @@ const { EventEmitter } = require('events');
 
 const phantom = require('../phantom');
 
+const Channel = require('./channel');
 const TH123Service = require('./tunnelServices/th123');
 
 const STATE_STARTED = Symbol.for('TUNNEL_STATE_STARTED');
@@ -70,8 +71,6 @@ class Tunnel extends EventEmitter {
 
                     console.info('channel open');
 
-                    this.channel = channel;
-
                     this.setupChannel(channel);
 
                 };
@@ -82,8 +81,6 @@ class Tunnel extends EventEmitter {
                 pc.ondatachannel = (event) => {
 
                     console.info('datachannel', event.channel);
-
-                    this.channel = event.channel;
 
                     this.setupChannel(event.channel);
 
@@ -217,6 +214,8 @@ class Tunnel extends EventEmitter {
 
     setupChannel(channel) {
         return Promise.coroutine(function*() {
+
+            this.channel = new Channel(channel);
 
             const services = [TH123Service].map((Service) => {
 

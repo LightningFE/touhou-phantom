@@ -2,6 +2,8 @@
 const { EventEmitter } = require('events');
 const dgram = require('dgram');
 
+const TAG = 'th123';
+
 class TH123Service extends EventEmitter {
 
     constructor(tunnel) {
@@ -21,7 +23,7 @@ class TH123Service extends EventEmitter {
     start() {
         return Promise.coroutine(function*() {
 
-            const channel = this.tunnel.channel;
+            const { channel } = this.tunnel;
 
             const source = {
                 address: null,
@@ -47,22 +49,22 @@ class TH123Service extends EventEmitter {
 
                 }
 
-                channel.send(msg.toString('base64'));
+                channel.send(TAG, msg.toString('base64'));
 
             });
 
-            channel.onmessage = (event) => {
+            channel.on(TAG, (payload) => {
 
-                console.info('channel message', event.data);
+                console.info('channel message', payload);
 
                 if(event.data.indexOf('{') == 0) {
 
-                    const data = JSON.parse(event.data);
+                    const data = JSON.parse(payload);
 
                     switch(data.type) {
                     case 'echo':
 
-                        channel.send(JSON.stringify({
+                        channel.send(TAG, JSON.stringify({
                             type: 'reply',
                             data: data.data,
                         }));
@@ -95,30 +97,12 @@ class TH123Service extends EventEmitter {
 
                 }
 
-            };
+            });
 
-            const beating = () => {
-
-                channel.send(JSON.stringify({
-                    type: 'echo',
-                    data: Date.now(),
-                }));
-
-            };
-
-            channel.send(JSON.stringify({
+            channel.send(TAG, JSON.stringify({
                 type: 'message',
                 data: 'Hello world!',
             }));
-
-            channel.onclose = (event) => {
-
-                console.info('channel close');
-
-                // TODO: Release resources.
-
-
-            };
 
             this.emit('data', this.localAddress);
 
