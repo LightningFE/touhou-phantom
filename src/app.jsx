@@ -1,4 +1,5 @@
 
+// Import once, use everywhere.
 window.Promise = require('bluebird');
 
 import injectTapEventPlugin from 'react-tap-event-plugin';

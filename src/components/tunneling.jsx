@@ -117,7 +117,7 @@ export default class TunnelingComponent extends Component {
 
             if(tunnelInfo.role == 'source') {
                 nestedItems.push(
-                    <ListItem primaryText={ tunnelInfo.localAddress } leftIcon={ <IconWifiTethering /> } rightIcon={ <IconContentCopy /> } onTouchTap={ this.copyAddress.bind(this, tunnelInfo.localAddress) } />
+                    <ListItem primaryText={ tunnelInfo.data } leftIcon={ <IconWifiTethering /> } rightIcon={ <IconContentCopy /> } onTouchTap={ this.copyAddress.bind(this, tunnelInfo.data) } />
                 );
             }
 

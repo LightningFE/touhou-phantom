@@ -44,13 +44,13 @@ class RelayInfo {
 
 class TunnelInfo {
     constructor({
-        role, peerId, identity, state, localAddress,
+        role, peerId, identity, state, data,
     }) {
         this.role = role;
         this.peerId = peerId;
         this.identity = identity;
         this.state = state;
-        this.localAddress = localAddress;
+        this.data = data;
     }
 }
 
@@ -78,9 +78,15 @@ class Phantom extends EventEmitter {
 
         this.udp = require('dgram').createSocket('udp4');
 
-        this.candidates = [];
-
         require('rpc.io').extend(this.io);
+
+        this.bindEvents();
+
+        this.udp.bind(0, '0.0.0.0');
+
+    }
+
+    bindEvents() {
 
         this.io.on('connect', () => {
 
@@ -127,8 +133,6 @@ class Phantom extends EventEmitter {
 
             });
         });
-
-        this.udp.bind(0, '0.0.0.0');
 
     }
 
@@ -400,9 +404,9 @@ class Phantom extends EventEmitter {
         tunnel.on('stateChanged', (state) => {
 
             this.tunnelInfos = this.tunnels.map(({
-                role, peerId, identity, state, localAddress,
+                role, peerId, identity, state, data,
             }) => new TunnelInfo({
-                role, peerId, identity, state, localAddress,
+                role, peerId, identity, state, data,
             }));
 
             this.emit('tunnelStateChanged', this.tunnelInfos);
