@@ -55,54 +55,27 @@ class TH123Service extends EventEmitter {
 
             channel.on(TAG, (payload) => {
 
-                console.info('channel message', payload);
+                const buf = Buffer.from(event.data, 'base64');
 
-                if(event.data.indexOf('{') == 0) {
+                if(this.role == 'source') {
 
-                    const data = JSON.parse(payload);
+                    if(source.address && source.port) {
 
-                    switch(data.type) {
-                    case 'echo':
+                        udp.send(buf, source.port, source.address);
 
-                        channel.send(TAG, JSON.stringify({
-                            type: 'reply',
-                            data: data.data,
-                        }));
-
-                        break;
+                    }
+                    else {
+                        console.warn('WARN_NO_SOURCE');
                     }
 
                 }
                 else {
 
-                    const buf = Buffer.from(event.data, 'base64');
-
-                    if(this.role == 'source') {
-
-                        if(source.address && source.port) {
-
-                            udp.send(buf, source.port, source.address);
-
-                        }
-                        else {
-                            console.warn('WARN_NO_SOURCE');
-                        }
-
-                    }
-                    else {
-
-                        udp.send(buf, this.dest.port, this.dest.address);
-
-                    }
+                    udp.send(buf, this.dest.port, this.dest.address);
 
                 }
 
             });
-
-            channel.send(TAG, JSON.stringify({
-                type: 'message',
-                data: 'Hello world!',
-            }));
 
             this.emit('data', this.localAddress);
 

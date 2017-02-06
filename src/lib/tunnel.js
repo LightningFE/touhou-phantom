@@ -4,6 +4,7 @@ const { EventEmitter } = require('events');
 const phantom = require('../phantom');
 
 const Channel = require('./channel');
+const EchoService = require('./tunnelServices/echo');
 const TH123Service = require('./tunnelServices/th123');
 
 const STATE_STARTED = Symbol.for('TUNNEL_STATE_STARTED');
@@ -217,7 +218,7 @@ class Tunnel extends EventEmitter {
 
             this.channel = new Channel(channel);
 
-            const services = [TH123Service].map((Service) => {
+            const services = [ EchoService, TH123Service ].map((Service) => {
 
                 const service = new Service(this);
 
