@@ -131,7 +131,17 @@ export default class RelayingComponent extends Component {
             return (
                 <MenuItem key={ idx } primaryText={ `${ wareInfo.address } - ${ wareInfo.delta.toFixed(2) }ms` } value={ wareInfo.name } />
             );
-        })
+        });
+
+        const relayState = (() => {
+            return this.state.relayInfo.state
+            ? this.state.relayInfo.state + (
+                this.state.relayInfo.state == 'GUEST_BOUND'
+                ? ` ${ this.state.relayInfo.guest }`
+                : ''
+            )
+            : null;
+        })();
 
         return (
             <Paper style={{
@@ -161,7 +171,7 @@ export default class RelayingComponent extends Component {
                                 <IconContentCopy />
                             </IconButton>
                         </div>
-                        <TextField hintText="点击「中转」获取中转地址" errorText={ this.state.relayInfo.state }  value={ this.state.relayInfo && this.state.relayInfo.port > 0 ? `${ this.state.relayInfo.address }:${ this.state.relayInfo.port }` : '' } disabled={ true } errorStyle={{
+                        <TextField hintText="点击「中转」获取中转地址" errorText={ relayState }  value={ this.state.relayInfo && this.state.relayInfo.port > 0 ? `${ this.state.relayInfo.address }:${ this.state.relayInfo.port }` : '' } disabled={ true } errorStyle={{
                             color: 'rgb(0, 188, 212)',
                         }} />
                     </div>

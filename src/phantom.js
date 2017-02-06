@@ -30,6 +30,7 @@ class RelayInfo {
         this.deltas = Array(30).fill(0);
         this.delta = 0;
         this.state = null;
+        this.guest = null;
     }
 
     updateDelta(delta) {
@@ -322,9 +323,17 @@ class Phantom extends EventEmitter {
                     }
                     else if(msg.indexOf('#PHANEVT') == 0) {
 
-                        const event = msg.toString('utf-8').split(' ')[1];
+                        const parts = msg.toString('utf-8').split(' ');
+                        const event = parts[1];
 
                         this.relayInfo.state = event;
+
+                        if(event == 'GUEST_BOUND') {
+
+                            const guest = parts[2];
+                            this.relayInfo.guest = guest;
+
+                        }
 
                         this.emit('relayUpdate', this.relayInfo);
 
