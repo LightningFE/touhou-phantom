@@ -23,7 +23,7 @@ class TH123Service extends EventEmitter {
     start() {
         return Promise.coroutine(function*() {
 
-            const { channel } = this.tunnel;
+            const { role, channel } = this.tunnel;
 
             const source = {
                 address: null,
@@ -42,22 +42,22 @@ class TH123Service extends EventEmitter {
 
             udp.on('message', (msg, rinfo) => {
 
-                if(this.role == 'source' && !source.address && !source.port) {
+                if(role == 'source' && !source.address && !source.port) {
 
                     source.address = rinfo.address;
                     source.port = rinfo.port;
 
                 }
 
-                channel.send(TAG, msg);
+                channel.send(TAG, msg.toString('base64'));
 
             });
 
             channel.on(TAG, (payload) => {
 
-                const buf = payload;
+                const buf = Buffer.from(payload, 'base64');
 
-                if(this.role == 'source') {
+                if(role == 'source') {
 
                     if(source.address && source.port) {
 

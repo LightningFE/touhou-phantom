@@ -9,11 +9,12 @@ class Channel extends EventEmitter {
         super();
 
         this.channel = channel;
-        this.channel.binaryType = 'arraybuffer';
+        //this.channel.binaryType = 'arraybuffer';
 
         this.channel.onmessage = (event) => {
 
-            const { name, payload } = msgpack.decode(Buffer.from(event.data));
+            //const { name, payload } = msgpack.decode(Buffer.from(event.data));
+            const { name, payload } = JSON.parse(event.data);
 
             this.emit(name, payload);
 
@@ -23,7 +24,13 @@ class Channel extends EventEmitter {
 
     send(name, payload) {
 
+        /*
         this.channel.send(msgpack.encode({
+            name, payload,
+        }));
+        */
+
+        this.channel.send(JSON.stringify({
             name, payload,
         }));
 
