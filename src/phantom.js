@@ -1,4 +1,5 @@
 
+const { remote } = require('electron');
 const { EventEmitter } = require('events');
 
 const Tunnel = require('./lib/tunnel');
@@ -94,7 +95,9 @@ class Phantom extends EventEmitter {
 
             this.setConnected(true);
 
-            this.io.exec('/api/clients/new')
+            this.io.exec('/api/clients/new', {
+                version: remote.app.getVersion(),
+            })
             .then(({
                 identity,
             }) => {
