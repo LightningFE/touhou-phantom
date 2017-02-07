@@ -23,7 +23,7 @@ class EchoService extends EventEmitter {
 
             });
 
-            channel.send(TAG, 'echo');
+            channel.send(TAG, Buffer.from('echo'));
 
         }.bind(this))();
     }

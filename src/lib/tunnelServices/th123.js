@@ -49,13 +49,13 @@ class TH123Service extends EventEmitter {
 
                 }
 
-                channel.send(TAG, msg.toString('base64'));
+                channel.send(TAG, msg);
 
             });
 
             channel.on(TAG, (payload) => {
 
-                const buf = Buffer.from(event.data, 'base64');
+                const buf = payload;
 
                 if(this.role == 'source') {
 
