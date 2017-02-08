@@ -27,6 +27,7 @@
     "bunyan": "^1.8.5",
     "electron-debug": "^1.1.0",
     "msgpack-lite": "^0.1.26",
+    "phantom-toolbox": "github:evshiron/phantom-toolbox",
     "request": "^2.79.0",
     "rpc.io": "git+https://github.com/evshiron/rpc.io.git",
     "socket.io-client": "^1.5.1",

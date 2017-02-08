@@ -184,12 +184,10 @@ class App extends Component {
                                 return (
                                     <AboutComponent />
                                 );
-                            /*
                             case CONTENT_TOOLBOX:
                                 return (
                                     <ToolboxComponent />
                                 );
-                            */
                             default:
                                 return (
                                     <div>ERROR_PAGE_NOT_FOUND</div>
