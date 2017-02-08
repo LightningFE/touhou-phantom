@@ -4,8 +4,7 @@ const { EventEmitter } = require('events');
 const phantom = require('../phantom');
 
 const Channel = require('./channel');
-const EchoService = require('./tunnelServices/echo');
-const TH123Service = require('./tunnelServices/th123');
+const { serviceLookup } = require('./services');
 
 const STATE_STARTED = Symbol.for('TUNNEL_STATE_STARTED');
 const STATE_CHECKING = Symbol.for('TUNNEL_STATE_CHECKING');
@@ -16,7 +15,7 @@ const STATE_DISCONNECTED = Symbol.for('TUNNEL_STATE_DISCONNECTED');
 class Tunnel extends EventEmitter {
 
     constructor({
-        phantom, role, peerId, identity,
+        phantom, role, peerId, identity, serviceName,
     }) {
         super();
 
@@ -26,13 +25,13 @@ class Tunnel extends EventEmitter {
         this.role = role;
         this.peerId = peerId;
         this.identity = identity;
+        this.serviceName = serviceName;
 
         this.state = 'UNKNOWN';
 
-        this.services = [];
-
         this.connection = null;
         this.channel = null;
+        this.service = null;
 
         this.data = null;
 
@@ -218,21 +217,21 @@ class Tunnel extends EventEmitter {
 
             this.channel = new Channel(channel);
 
-            const services = [ EchoService, TH123Service ].map((Service) => {
+            const s = serviceLookup(this.serviceName);
 
-                const service = new Service(this);
+            if(!s) {
+                throw new Error('SERVICE_NOT_FOUND');
+            }
 
-                service.on('data', data => this.setData(data));
+            const { Service } = s;
 
-                return new Promise((resolve, reject) => {
-                    service.start()
-                    .then(() => resolve(service))
-                    .catch(reject);
-                });
+            const service = new Service(this);
 
-            });
+            service.on('data', data => this.setData(data));
 
-            this.services = [...this.services, ...services];
+            yield service.start();
+
+            this.service = service;
 
         }.bind(this))();
     }

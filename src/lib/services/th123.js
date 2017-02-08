@@ -16,7 +16,7 @@ class TH123Service extends EventEmitter {
             port: 10800,
         };
 
-        this.localAddress = null;
+        this.address = null;
 
     }
 
@@ -38,7 +38,7 @@ class TH123Service extends EventEmitter {
 
             console.info('udp bound');
 
-            this.localAddress = `127.0.0.1:${ udp.address().port }`;
+            this.address = `127.0.0.1:${ udp.address().port }`;
 
             udp.on('message', (msg, rinfo) => {
 
@@ -77,7 +77,9 @@ class TH123Service extends EventEmitter {
 
             });
 
-            this.emit('data', this.localAddress);
+            this.emit('data', {
+                address: this.address,
+            });
 
         }.bind(this))();
     }

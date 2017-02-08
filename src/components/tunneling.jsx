@@ -2,7 +2,7 @@
 const { clipboard } = require('electron');
 
 import React, { Component } from 'react';
-import { Paper, List, ListItem, TextField, RaisedButton, CircularProgress } from 'material-ui';
+import { Paper, List, ListItem, SelectField, MenuItem, TextField, RaisedButton, CircularProgress } from 'material-ui';
 import IconLink from 'material-ui/svg-icons/content/link';
 import IconDone from 'material-ui/svg-icons/action/done';
 import IconError from 'material-ui/svg-icons/alert/error';
@@ -12,6 +12,8 @@ import IconContentCopy from 'material-ui/svg-icons/content/content-copy';
 
 const phantom = require('../phantom');
 
+const { services, serviceViewLookup } = require('../lib/services');
+
 export default class TunnelingComponent extends Component {
 
     constructor(props) {
@@ -20,6 +22,7 @@ export default class TunnelingComponent extends Component {
         this.state = {
             tunnelInfos: [],
             peerId: '',
+            serviceSelected: null,
             tunnelBooting: false,
         };
 
@@ -39,13 +42,13 @@ export default class TunnelingComponent extends Component {
 
     }
 
-    copyAddress(address) {
+    copyData(data) {
 
-        if(address) {
+        if(data) {
 
-            clipboard.writeText(address);
+            clipboard.writeText(data);
 
-            alert(`「${ address }」已经复制到剪贴板。`);
+            alert(`「${ data }」已经复制到剪贴板。`);
 
         }
         else {
@@ -62,13 +65,22 @@ export default class TunnelingComponent extends Component {
         });
     }
 
+    onServiceChange(event, index, value) {
+        this.setState({
+            serviceSelected: value,
+        });
+    }
+
+
     onConnectClick() {
 
         this.setState({
             tunnelBooting: true,
         });
 
-        phantom.startTunnel(this.state.peerId)
+        const serviceName = this.state.serviceSelected;
+
+        phantom.startTunnel(this.state.peerId, serviceName)
         .then((accept) => {
 
             this.setState({
@@ -83,7 +95,7 @@ export default class TunnelingComponent extends Component {
 
     render() {
 
-        const tunnelItems = this.state.tunnelInfos.map((tunnelInfo, idx) => {
+        const tunnelCards = this.state.tunnelInfos.map((tunnelInfo, idx) => {
 
             let stateIcon = null;
 
@@ -111,30 +123,47 @@ export default class TunnelingComponent extends Component {
                 break;
             }
 
-            const nestedItems = [
-                <ListItem primaryText={ tunnelInfo.peerId } leftIcon={ <IconFace /> } />,
-            ];
+            const v = serviceViewLookup(tunnelInfo.serviceName);
 
-            if(tunnelInfo.role == 'source') {
-                nestedItems.push(
-                    <ListItem primaryText={ tunnelInfo.data } leftIcon={ <IconWifiTethering /> } rightIcon={ <IconContentCopy /> } onTouchTap={ this.copyAddress.bind(this, tunnelInfo.data) } />
-                );
+            if(!v) {
+
+                console.error(new Error('ERROR_SERVICEVIEW_NOT_FOUND'));
+
+                return null;
+
             }
 
+            const { View } = v;
+
             return (
-                <ListItem key={ idx } primaryText={ tunnelInfo.identity } primaryTogglesNestedList={ true } leftIcon={ <IconLink /> } rightIcon={ stateIcon } nestedItems={ nestedItems } />
+                <View tunnelInfo={ tunnelInfo } stateIcon={ stateIcon } onCopyData={ this.copyData.bind(this) } />
             );
+
+        });
+
+        const serviceItems = services.map(({
+            name, service,
+        }, idx) => {
+
+            return (
+                <MenuItem key={ idx } primaryText={ name } value={ name } />
+            );
+
         });
 
         return (
             <Paper style={{
                 padding: 16,
             }}>
-                <List>
-                    { tunnelItems }
-                </List>
+                <div>
+                    { tunnelCards }
+                </div>
                 <div>
                     <TextField hintText="PeerId" onChange={ this.onPeerIdChange.bind(this) } /><br />
+                    <SelectField floatingLabelText="服务类型" value={ this.state.serviceSelected } floatingLabelFixed={ true } onChange={ this.onServiceChange.bind(this) }>
+                        <MenuItem primaryText="" value={ null } />
+                        { serviceItems }
+                    </SelectField>
                     <div>
                         {
                             this.state.tunnelBooting
