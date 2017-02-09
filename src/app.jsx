@@ -17,6 +17,7 @@ import IconDisconnected from 'material-ui/svg-icons/device/signal-cellular-0-bar
 import RelayingComponent from './components/relaying';
 import TunnelingComponent from './components/tunneling';
 import ToolboxComponent from './components/toolbox';
+import SettingsComponent from './components/settings';
 import HelpComponent from './components/help';
 import AboutComponent from './components/about';
 
@@ -25,6 +26,7 @@ const phantom = require('./phantom');
 const CONTENT_RELAYING = Symbol('CONTENT_RELAYING');
 const CONTENT_TUNNELING = Symbol('CONTENT_TUNNELING');
 const CONTENT_TOOLBOX = Symbol('CONTENT_TOOLBOX');
+const CONTENT_SETTINGS = Symbol('CONTENT_SETTINGS');
 const CONTENT_HELP = Symbol('CONTENT_HELP');
 const CONTENT_ABOUT = Symbol('CONTENT_ABOUT');
 
@@ -160,6 +162,7 @@ class App extends Component {
                         <Divider />
                         <MenuItem checked={ true }>东方非想天则</MenuItem>
                         <Divider />
+                        <MenuItem onTouchTap={ () => { this.toggleDrawer(); this.setContent(CONTENT_SETTINGS); } }>设置</MenuItem>
                         <MenuItem onTouchTap={ () => { this.toggleDrawer(); this.setContent(CONTENT_HELP); } }>帮助</MenuItem>
                         <MenuItem onTouchTap={ () => { this.toggleDrawer(); this.setContent(CONTENT_ABOUT); } }>关于</MenuItem>
                     </Drawer>
@@ -175,6 +178,10 @@ class App extends Component {
                             case CONTENT_TUNNELING:
                                 return (
                                     <TunnelingComponent />
+                                );
+                            case CONTENT_SETTINGS:
+                                return (
+                                    <SettingsComponent />
                                 );
                             case CONTENT_HELP:
                                 return (

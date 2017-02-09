@@ -4,6 +4,7 @@ const { EventEmitter } = require('events');
 
 const SocketIOClient = require('socket.io-client');
 
+const Settings = require('./lib/settings');
 const Tunnel = require('./lib/tunnel');
 
 const { confirmEx } = require('./util');
@@ -74,7 +75,10 @@ class Phantom extends EventEmitter {
         this.remoteUrl = remoteUrl;
         this.dest = dest;
 
+        this.settings = new Settings();
+
         this.connected = false;
+
         this.wareInfos = [];
         this.relayInfo = null;
         this.tunnels = [];
