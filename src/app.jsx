@@ -23,13 +23,6 @@ import AboutComponent from './components/about';
 
 const phantom = require('./phantom');
 
-const CONTENT_RELAYING = Symbol('CONTENT_RELAYING');
-const CONTENT_TUNNELING = Symbol('CONTENT_TUNNELING');
-const CONTENT_TOOLBOX = Symbol('CONTENT_TOOLBOX');
-const CONTENT_SETTINGS = Symbol('CONTENT_SETTINGS');
-const CONTENT_HELP = Symbol('CONTENT_HELP');
-const CONTENT_ABOUT = Symbol('CONTENT_ABOUT');
-
 function parseCandidate(text) {
 
     const pos = text.indexOf('candidate:') + 'candidate:'.length;
@@ -55,7 +48,7 @@ class App extends Component {
 
         this.state = {
             drawerShowed: true,
-            content: CONTENT_HELP,
+            content: <HelpComponent />,
             connected: false,
             identity: '',
         };
@@ -148,59 +141,30 @@ class App extends Component {
             </IconButton>
         );
 
+        const content = this.state.content;
+
         return (
             <MuiThemeProvider muiTheme={ getMuiTheme({ userAgent: 'Chrome' }) }>
                 <div>
                     <AppBar title={ this.title } iconElementRight={ connectionIndicator } onLeftIconButtonTouchTap={ this.toggleDrawer.bind(this) } />
                     <Drawer open={ this.state.drawerShowed } docked={ false } onRequestChange={ this.toggleDrawer.bind(this) }>
                         <AppBar title={ this.title } onLeftIconButtonTouchTap={ this.toggleDrawer.bind(this) } />
-                        <MenuItem>#{ this.state.identity }</MenuItem>
+                        <MenuItem># { this.state.identity }</MenuItem>
                         <Divider />
-                        <MenuItem onTouchTap={ () => { this.toggleDrawer(); this.setContent(CONTENT_RELAYING); } }>中转服务</MenuItem>
-                        <MenuItem onTouchTap={ () => { this.toggleDrawer(); this.setContent(CONTENT_TUNNELING); } }>穿透服务</MenuItem>
-                        <MenuItem onTouchTap={ () => { this.toggleDrawer(); this.setContent(CONTENT_TOOLBOX); } }>工具箱</MenuItem>
+                        <MenuItem onTouchTap={ () => { this.toggleDrawer(); this.setContent(<RelayingComponent />); } }>中转服务</MenuItem>
+                        <MenuItem onTouchTap={ () => { this.toggleDrawer(); this.setContent(<TunnelingComponent />); } }>穿透服务</MenuItem>
+                        <MenuItem onTouchTap={ () => { this.toggleDrawer(); this.setContent(<ToolboxComponent />); } }>工具箱</MenuItem>
                         <Divider />
                         <MenuItem checked={ true }>东方非想天则</MenuItem>
                         <Divider />
-                        <MenuItem onTouchTap={ () => { this.toggleDrawer(); this.setContent(CONTENT_SETTINGS); } }>设置</MenuItem>
-                        <MenuItem onTouchTap={ () => { this.toggleDrawer(); this.setContent(CONTENT_HELP); } }>帮助</MenuItem>
-                        <MenuItem onTouchTap={ () => { this.toggleDrawer(); this.setContent(CONTENT_ABOUT); } }>关于</MenuItem>
+                        <MenuItem onTouchTap={ () => { this.toggleDrawer(); this.setContent(<SettingsComponent />); } }>设置</MenuItem>
+                        <MenuItem onTouchTap={ () => { this.toggleDrawer(); this.setContent(<HelpComponent />); } }>帮助</MenuItem>
+                        <MenuItem onTouchTap={ () => { this.toggleDrawer(); this.setContent(<AboutComponent />); } }>关于</MenuItem>
                     </Drawer>
                     <div style={{
                         margin: 8,
                     }}>
-                        { (() => {
-                            switch(this.state.content) {
-                            case CONTENT_RELAYING:
-                                return (
-                                    <RelayingComponent />
-                                );
-                            case CONTENT_TUNNELING:
-                                return (
-                                    <TunnelingComponent />
-                                );
-                            case CONTENT_SETTINGS:
-                                return (
-                                    <SettingsComponent />
-                                );
-                            case CONTENT_HELP:
-                                return (
-                                    <HelpComponent />
-                                );
-                            case CONTENT_ABOUT:
-                                return (
-                                    <AboutComponent />
-                                );
-                            case CONTENT_TOOLBOX:
-                                return (
-                                    <ToolboxComponent />
-                                );
-                            default:
-                                return (
-                                    <div>ERROR_PAGE_NOT_FOUND</div>
-                                );
-                            }
-                        })() }
+                        { content ? content : <div>ERROR_PAGE_NOT_FOUND</div> }
                     </div>
                 </div>
             </MuiThemeProvider>

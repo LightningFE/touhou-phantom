@@ -78,6 +78,7 @@ class Phantom extends EventEmitter {
         this.settings = new Settings();
 
         this.connected = false;
+        this.identity = null;
 
         this.wareInfos = [];
         this.relayInfo = null;
@@ -104,6 +105,7 @@ class Phantom extends EventEmitter {
 
             this.io.exec('/api/clients/new', {
                 version: remote.app.getVersion(),
+                nickname: this.settings.get('nickname'),
             })
             .then(({
                 identity,
