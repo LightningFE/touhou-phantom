@@ -20,6 +20,14 @@ module.exports = {
                 exclude: /(node_modules)/,
                 loader: 'babel',
             },
+            {
+                test: /\.(jpg|png|svg)$/,
+                loader: 'url',
+                query: {
+                    limit: 16384,
+                    name: './files/[hash].[ext]',
+                },
+            },
         ],
     },
     externals: Object.keys(dependencies || {}),
