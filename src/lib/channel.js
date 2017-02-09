@@ -1,8 +1,6 @@
 
 const { EventEmitter } = require('events');
 
-const msgpack = require('msgpack-lite');
-
 class Channel extends EventEmitter {
 
     constructor(channel) {

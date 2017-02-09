@@ -14,6 +14,7 @@ import { AppBar, Drawer, Paper, Menu, MenuItem, Divider, IconButton } from 'mate
 import IconConnected from 'material-ui/svg-icons/device/signal-cellular-4-bar';
 import IconDisconnected from 'material-ui/svg-icons/device/signal-cellular-0-bar';
 
+import SquareComponent from './components/square';
 import RelayingComponent from './components/relaying';
 import TunnelingComponent from './components/tunneling';
 import ToolboxComponent from './components/toolbox';
@@ -149,7 +150,7 @@ class App extends Component {
                     <AppBar title={ this.title } iconElementRight={ connectionIndicator } onLeftIconButtonTouchTap={ this.toggleDrawer.bind(this) } />
                     <Drawer open={ this.state.drawerShowed } docked={ false } onRequestChange={ this.toggleDrawer.bind(this) }>
                         <AppBar title={ this.title } onLeftIconButtonTouchTap={ this.toggleDrawer.bind(this) } />
-                        <MenuItem># { this.state.identity }</MenuItem>
+                        <MenuItem onTouchTap={ () => { this.toggleDrawer(); this.setContent(<SquareComponent />); } }># { this.state.id }</MenuItem>
                         <Divider />
                         <MenuItem onTouchTap={ () => { this.toggleDrawer(); this.setContent(<RelayingComponent />); } }>中转服务</MenuItem>
                         <MenuItem onTouchTap={ () => { this.toggleDrawer(); this.setContent(<TunnelingComponent />); } }>穿透服务</MenuItem>

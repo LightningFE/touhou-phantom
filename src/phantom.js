@@ -1,8 +1,9 @@
 
 const { remote } = require('electron');
 const { EventEmitter } = require('events');
+const { createSocket } = require('dgram');
 
-const SocketIOClient = require('socket.io-client');
+const { connect } = require('socket.io-client');
 
 const Settings = require('./lib/settings');
 const Tunnel = require('./lib/tunnel');
@@ -21,6 +22,22 @@ class WareInfo {
         this.port = port;
         this.delta = delta;
     }
+}
+
+class RacerInfo {
+
+    constructor({
+        ware,
+    }) {
+        this.ware = ware;
+        this.deltas = [];
+        this.delta = null;
+    }
+
+    calculate() {
+        this.delta = this.deltas.reduce((pv, cv) => pv + cv, 0) / this.deltas.length;
+    }
+
 }
 
 class RelayInfo {
@@ -61,6 +78,60 @@ class TunnelInfo {
     }
 }
 
+class PhantomAPI extends EventEmitter {
+
+    constructor(phantom) {
+        super();
+
+        this.phantom = phantom;
+
+        require('rpc.io').extend(this.phantom.io);
+
+    }
+
+    bind(name, fn) {
+        this.phantom.io.on(name, fn);
+    }
+
+    expose(name, fn) {
+        this.phantom.io.expose(name, fn);
+    }
+
+    getClients() {
+        return fetch(`${ this.phantom.remoteUrl }/api/clients`).then((res) => res.json());
+    }
+
+    getWares() {
+        return fetch(`${ this.phantom.remoteUrl }/api/wares`).then((res) => res.json());
+    }
+
+    newMessage(message) {
+        return this.phantom.io.exec('/api/messages/new', {
+            message,
+        });
+    }
+
+    newClient() {
+        return this.phantom.io.exec('/api/clients/new', {
+            version: remote.app.getVersion(),
+            nickname: this.phantom.settings.get('nickname'),
+        });
+    }
+
+    newRepeat(wareName) {
+        return this.phantom.io.exec('/api/repeats/new', {
+            wareName,
+        });
+    }
+
+    requestTunnel(toId, serviceName) {
+        return this.phantom.io.exec('/api/tunnels/request', {
+            toId, serviceName,
+        });
+    }
+
+}
+
 class Phantom extends EventEmitter {
 
     constructor({
@@ -85,16 +156,47 @@ class Phantom extends EventEmitter {
         this.tunnels = [];
         this.tunnelInfos = [];
 
-        this.io = new SocketIOClient(this.remoteUrl);
+        this.io = connect(this.remoteUrl);
 
-        this.udp = require('dgram').createSocket('udp4');
+        this.udp = createSocket('udp4');
+        this.udp.bind(0, '0.0.0.0');
 
-        require('rpc.io').extend(this.io);
+        this.api = new PhantomAPI(this);
 
         this.bindEvents();
 
-        this.udp.bind(0, '0.0.0.0');
+    }
 
+    onNewMessage({
+        sender, time, message,
+    }) {
+        this.emit('userMessage', {
+            sender, time, message,
+        });
+    }
+
+    onRequestTunnel({
+        fromId, tunnelId, serviceName,
+    }) {
+        return new Promise((resolve, reject) => {
+
+            confirmEx(`Tunneling with ${ fromId }?`)
+            .then((accept) => {
+
+                if(accept) {
+
+                    this.createTunnel(null, fromId, tunnelId, serviceName);
+
+                }
+
+                resolve({
+                    accept,
+                });
+
+            })
+            .catch((err) => reject(err));
+
+        });
     }
 
     bindEvents() {
@@ -103,16 +205,11 @@ class Phantom extends EventEmitter {
 
             this.setConnected(true);
 
-            this.io.exec('/api/clients/new', {
-                version: remote.app.getVersion(),
-                nickname: this.settings.get('nickname'),
-            })
+            this.api.newClient()
             .then(({
                 id,
             }) => {
-
                 this.setId(id);
-
             });
 
         });
@@ -123,31 +220,8 @@ class Phantom extends EventEmitter {
 
         });
 
-        this.io.expose('/api/tunnels/request', ({
-            fromId,
-            tunnelId,
-            serviceName,
-        }) => {
-            return new Promise((resolve, reject) => {
-
-                confirmEx(`Tunneling with ${ fromId }?`)
-                .then((accept) => {
-
-                    if(accept) {
-
-                        this.createTunnel(null, fromId, tunnelId, serviceName);
-
-                    }
-
-                    resolve({
-                        accept,
-                    });
-
-                })
-                .catch((err) => reject(err));
-
-            });
-        });
+        this.api.bind('/io/messages/new', this.onNewMessage.bind(this));
+        this.api.expose('/api/tunnels/request', this.onRequestTunnel.bind(this));
 
     }
 
@@ -166,22 +240,6 @@ class Phantom extends EventEmitter {
 
             if(!wares.length) {
                 return reject(new Error('ERROR_NO_RACERS'));
-            }
-
-            class RacerInfo {
-
-                constructor({
-                    ware,
-                }) {
-                    this.ware = ware;
-                    this.deltas = [];
-                    this.delta = null;
-                }
-
-                calculate() {
-                    this.delta = this.deltas.reduce((pv, cv) => pv + cv, 0) / this.deltas.length;
-                }
-
             }
 
             const timeout = 3000;
@@ -248,9 +306,7 @@ class Phantom extends EventEmitter {
                 yield this.destroyRelay();
             }
 
-            const { address, port } = yield this.io.exec('/api/repeats/new', {
-                wareName,
-            });
+            const { address, port } = yield this.api.newRepeat(wareName);
 
             const socket = yield this.setupRelay({
                 address, port,
@@ -270,7 +326,7 @@ class Phantom extends EventEmitter {
     updateWares() {
         return Promise.coroutine(function*() {
 
-            const data = yield fetch(`${ this.remoteUrl }/api/wares`).then((res) => res.json());
+            const data = yield this.api.getWares();
 
             console.info('/api/wares', data);
 
@@ -403,9 +459,7 @@ class Phantom extends EventEmitter {
 
             const toId = parseInt(peerId);
 
-            this.io.exec('/api/tunnels/request', {
-                toId, serviceName,
-            })
+            this.api.requestTunnel(toId, serviceName)
             .then(({
                 accept,
                 tunnelId,
