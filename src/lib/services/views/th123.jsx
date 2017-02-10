@@ -1,6 +1,6 @@
 
 import React, { Component } from 'react';
-import { Card, CardHeader, CardText, CardActions, RaisedButton } from 'material-ui';
+import { Card, CardHeader, CardText, CardActions, TextField, RaisedButton } from 'material-ui';
 
 class TH123ServiceView extends Component {
 
@@ -20,12 +20,13 @@ class TH123ServiceView extends Component {
                     tunnelInfo.role == 'source'
                     ? <div>
                         <CardText>
-                            请使用此地址连接主机：<br />
-                            { tunnelInfo.data ? tunnelInfo.data.address : 'UNKNOWN' }
+                            <TextField floatingLabelText="使用此地址连接主机" value={ tunnelInfo.data ? tunnelInfo.data.address : '' } inputStyle={{
+                                backgroundImage: `url(${ require('../../../images/ic_content_copy_black_24px.svg') })`,
+                                backgroundRepeat: 'no-repeat',
+                                backgroundAttachment: 'scroll',
+                                backgroundPosition: '98% 50%',
+                            }} fullWidth={ true } onTouchTap={ () => onCopyData(tunnelInfo.data ? tunnelInfo.data.address : '') } />
                         </CardText>
-                        <CardActions>
-                            <RaisedButton onTouchTap={ () => onCopyData(tunnelInfo.data ? tunnelInfo.data.address : '') }>复制地址</RaisedButton>
-                        </CardActions>
                     </div>
                     : <div>
                         <CardText>
