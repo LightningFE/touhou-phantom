@@ -148,7 +148,7 @@ export default class RelayingComponent extends Component {
                 padding: 16,
             }}>
                 <div>
-                    <SelectField floatingLabelText="中转服务器" value={ this.state.wareSelected } floatingLabelFixed={ true } onChange={ this.onWareChange.bind(this) }>
+                    <SelectField floatingLabelText="中转服务器" value={ this.state.wareSelected } floatingLabelFixed={ true } fullWidth={ true } onChange={ this.onWareChange.bind(this) }>
                         <MenuItem primaryText="自动选择" value="auto" />
                         { wareItems }
                     </SelectField>
@@ -169,7 +169,7 @@ export default class RelayingComponent extends Component {
                             backgroundRepeat: 'no-repeat',
                             backgroundAttachment: 'scroll',
                             backgroundPosition: '98% 50%',
-                        }} onTouchTap={ this.state.relayInfo && this.state.relayInfo.address ? this.onCopyClick.bind(this) : null } />
+                        }} fullWidth={ true } onTouchTap={ this.state.relayInfo && this.state.relayInfo.address ? this.onCopyClick.bind(this) : null } />
                     </div>
                     <div>
                         {

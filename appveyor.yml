@@ -6,9 +6,6 @@ environment:
 platform:
   - x86
 
-cache:
-  - node_modules
-
 install:
   - ps: Install-Product node Stable
   - npm install

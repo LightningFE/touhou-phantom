@@ -161,8 +161,8 @@ export default class TunnelingComponent extends Component {
                     { tunnelCards }
                 </div>
                 <div>
-                    <TextField hintText="PeerId" onChange={ this.onPeerIdChange.bind(this) } /><br />
-                    <SelectField floatingLabelText="服务类型" value={ this.state.serviceSelected } floatingLabelFixed={ true } onChange={ this.onServiceChange.bind(this) }>
+                    <TextField hintText="输入对方的ID" fullWidth={ true } onChange={ this.onPeerIdChange.bind(this) } /><br />
+                    <SelectField floatingLabelText="服务类型" value={ this.state.serviceSelected } floatingLabelFixed={ true } fullWidth={ true } onChange={ this.onServiceChange.bind(this) }>
                         <MenuItem primaryText="" value={ null } />
                         { serviceItems }
                     </SelectField>

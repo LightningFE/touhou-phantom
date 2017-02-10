@@ -100,41 +100,6 @@ class App extends Component {
         });
     }
 
-    onRelayCopyClick() {
-
-        clipboard.writeText(this.state.relayAddress);
-
-        alertEx(`"${ this.state.relayAddress }" is copied.`);
-
-    }
-
-    onRelayClick() {
-
-        this.startRelaying()
-        .catch((err) => {
-
-            this.setState({
-                relayState: err.message,
-            });
-
-        });
-
-    }
-
-    onTunnelCopyClick(localAddress) {
-
-        clipboard.writeText(localAddress);
-
-        alertEx(`"${ localAddress }" is copied.`);
-
-    }
-
-    onTunnelClick() {
-
-        this.startTunneling();
-
-    }
-
     render() {
 
         const connectionIndicator = (
