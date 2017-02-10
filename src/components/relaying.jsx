@@ -4,6 +4,7 @@ const { clipboard } = require('electron');
 import React, { Component } from 'react';
 import { Paper, SelectField, MenuItem, TextField, RaisedButton, CircularProgress } from 'material-ui';
 
+import { alertEx } from '../util';
 import StatsView from './views/stats';
 
 const phantom = require('../phantom');
@@ -120,7 +121,7 @@ export default class RelayingComponent extends Component {
 
         clipboard.writeText(address);
 
-        alert(`「${ address }」已经复制到剪贴板。`);
+        alertEx(`「${ address }」已经复制到剪贴板。`);
 
     }
 

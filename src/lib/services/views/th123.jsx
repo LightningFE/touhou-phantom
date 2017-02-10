@@ -24,7 +24,7 @@ class TH123ServiceView extends Component {
                             { tunnelInfo.data ? tunnelInfo.data.address : 'UNKNOWN' }
                         </CardText>
                         <CardActions>
-                            <RaisedButton onTouchTap={ () => onCopyData(tunnelInfo.data) }>复制地址</RaisedButton>
+                            <RaisedButton onTouchTap={ () => onCopyData(tunnelInfo.data ? tunnelInfo.data.address : '') }>复制地址</RaisedButton>
                         </CardActions>
                     </div>
                     : <div>

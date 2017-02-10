@@ -10,6 +10,8 @@ import IconFace from 'material-ui/svg-icons/action/face';
 import IconWifiTethering from 'material-ui/svg-icons/device/wifi-tethering';
 import IconContentCopy from 'material-ui/svg-icons/content/content-copy';
 
+import { alertEx } from '../util';
+
 const phantom = require('../phantom');
 
 const { services, serviceViewLookup } = require('../lib/services');
@@ -48,12 +50,12 @@ export default class TunnelingComponent extends Component {
 
             clipboard.writeText(data);
 
-            alert(`「${ data }」已经复制到剪贴板。`);
+            alertEx(`「${ data }」已经复制到剪贴板。`);
 
         }
         else {
 
-            alert(`Nothing is copied.`);
+            alertEx(`Nothing is copied.`);
 
         }
 
@@ -87,7 +89,7 @@ export default class TunnelingComponent extends Component {
                 tunnelBooting: false,
             });
 
-            alert(`${ accept ? 'Accepted' : 'Denied' }.`);
+            alertEx(`${ accept ? 'Accepted' : 'Denied' }.`);
 
         });
 

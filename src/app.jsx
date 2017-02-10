@@ -14,6 +14,7 @@ import { AppBar, Drawer, Paper, Menu, MenuItem, Divider, IconButton } from 'mate
 import IconConnected from 'material-ui/svg-icons/device/signal-cellular-4-bar';
 import IconDisconnected from 'material-ui/svg-icons/device/signal-cellular-0-bar';
 
+import { alertEx, PhantomHelper } from './util';
 import SquareComponent from './components/square';
 import RelayingComponent from './components/relaying';
 import TunnelingComponent from './components/tunneling';
@@ -103,7 +104,7 @@ class App extends Component {
 
         clipboard.writeText(this.state.relayAddress);
 
-        alert(`"${ this.state.relayAddress }" is copied.`);
+        alertEx(`"${ this.state.relayAddress }" is copied.`);
 
     }
 
@@ -124,7 +125,7 @@ class App extends Component {
 
         clipboard.writeText(localAddress);
 
-        alert(`"${ localAddress }" is copied.`);
+        alertEx(`"${ localAddress }" is copied.`);
 
     }
 
@@ -167,6 +168,7 @@ class App extends Component {
                     }}>
                         { content ? content : <div>ERROR_PAGE_NOT_FOUND</div> }
                     </div>
+                    <PhantomHelper />
                 </div>
             </MuiThemeProvider>
         );
