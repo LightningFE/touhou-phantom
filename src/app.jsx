@@ -50,7 +50,7 @@ class App extends Component {
             drawerShowed: true,
             content: <HelpComponent />,
             connected: false,
-            identity: '',
+            id: '',
         };
 
     }
@@ -63,7 +63,7 @@ class App extends Component {
 
         this.setState({
             connected: phantom.connected,
-            identity: phantom.identity,
+            id: phantom.id,
         });
 
         phantom.on('connected', () => {
@@ -78,9 +78,9 @@ class App extends Component {
             });
         });
 
-        phantom.on('identityChanged', (identity) => {
+        phantom.on('idChanged', (id) => {
             this.setState({
-                identity,
+                id,
             });
         });
 

@@ -50,11 +50,11 @@ class RelayInfo {
 
 class TunnelInfo {
     constructor({
-        role, peerId, identity, serviceName, state, data,
+        role, peerId, id, serviceName, state, data,
     }) {
         this.role = role;
         this.peerId = peerId;
-        this.identity = identity;
+        this.id = id;
         this.serviceName = serviceName;
         this.state = state;
         this.data = data;
@@ -78,7 +78,7 @@ class Phantom extends EventEmitter {
         this.settings = new Settings();
 
         this.connected = false;
-        this.identity = null;
+        this.id = null;
 
         this.wareInfos = [];
         this.relayInfo = null;
@@ -108,10 +108,10 @@ class Phantom extends EventEmitter {
                 nickname: this.settings.get('nickname'),
             })
             .then(({
-                identity,
+                id,
             }) => {
 
-                this.setIdentity(identity);
+                this.setId(id);
 
             });
 
@@ -124,18 +124,18 @@ class Phantom extends EventEmitter {
         });
 
         this.io.expose('/api/tunnels/request', ({
-            fromIdentity,
-            tunnelIdentity,
+            fromId,
+            tunnelId,
             serviceName,
         }) => {
             return new Promise((resolve, reject) => {
 
-                confirmEx(`Tunneling with ${ fromIdentity }?`)
+                confirmEx(`Tunneling with ${ fromId }?`)
                 .then((accept) => {
 
                     if(accept) {
 
-                        this.createTunnel(null, fromIdentity, tunnelIdentity, serviceName);
+                        this.createTunnel(null, fromId, tunnelId, serviceName);
 
                     }
 
@@ -156,9 +156,9 @@ class Phantom extends EventEmitter {
         this.emit(connected ? 'connected' : 'disconnected');
     }
 
-    setIdentity(identity) {
-        this.identity = identity;
-        this.emit('identityChanged', identity);
+    setId(id) {
+        this.id = id;
+        this.emit('idChanged', id);
     }
 
     raceDelay(wares) {
@@ -401,19 +401,19 @@ class Phantom extends EventEmitter {
     startTunnel(peerId, serviceName) {
         return new Promise((resolve, reject) => {
 
-            const toIdentity = parseInt(peerId);
+            const toId = parseInt(peerId);
 
             this.io.exec('/api/tunnels/request', {
-                toIdentity, serviceName,
+                toId, serviceName,
             })
             .then(({
                 accept,
-                tunnelIdentity,
+                tunnelId,
             }) => {
 
                 if(accept) {
 
-                    this.createTunnel('source', toIdentity, tunnelIdentity, serviceName);
+                    this.createTunnel('source', toId, tunnelId, serviceName);
 
                 }
 
@@ -424,11 +424,11 @@ class Phantom extends EventEmitter {
         });
     }
 
-    createTunnel(role, peerId, identity, serviceName) {
+    createTunnel(role, peerId, id, serviceName) {
 
         const tunnel = new Tunnel({
             phantom: this,
-            role, peerId, identity, serviceName,
+            role, peerId, id, serviceName,
         });
 
         this.tunnels.push(tunnel);
@@ -436,9 +436,9 @@ class Phantom extends EventEmitter {
         tunnel.on('stateChanged', (state) => {
 
             this.tunnelInfos = this.tunnels.map(({
-                role, peerId, identity, serviceName, state, data,
+                role, peerId, id, serviceName, state, data,
             }) => new TunnelInfo({
-                role, peerId, identity, serviceName, state, data,
+                role, peerId, id, serviceName, state, data,
             }));
 
             this.emit('tunnelStateChanged', this.tunnelInfos);

@@ -15,7 +15,7 @@ const STATE_DISCONNECTED = Symbol.for('TUNNEL_STATE_DISCONNECTED');
 class Tunnel extends EventEmitter {
 
     constructor({
-        phantom, role, peerId, identity, serviceName,
+        phantom, role, peerId, id, serviceName,
     }) {
         super();
 
@@ -24,7 +24,7 @@ class Tunnel extends EventEmitter {
 
         this.role = role;
         this.peerId = peerId;
-        this.identity = identity;
+        this.id = id;
         this.serviceName = serviceName;
 
         this.state = 'UNKNOWN';
@@ -35,7 +35,7 @@ class Tunnel extends EventEmitter {
 
         this.data = null;
 
-        this.setupTunnel(role, peerId, identity);
+        this.setupTunnel(role, peerId, id);
 
     }
 
@@ -49,7 +49,7 @@ class Tunnel extends EventEmitter {
         this.emit('stateChanged', this.state);
     }
 
-    setupTunnel(role, peerId, tunnelIdentity) {
+    setupTunnel(role, peerId, tunnelId) {
         return Promise.coroutine(function*() {
 
             const pc = new webkitRTCPeerConnection({
@@ -112,7 +112,7 @@ class Tunnel extends EventEmitter {
                     console.info('icecandidate', event.candidate);
 
                     this.phantom.io.emit('tunnel', {
-                        identity: tunnelIdentity,
+                        id: tunnelId,
                         data: {
                             type: 'candidate',
                             data: event.candidate,
@@ -141,7 +141,7 @@ class Tunnel extends EventEmitter {
                 pc.setLocalDescription(desc);
 
                 this.phantom.io.emit('tunnel', {
-                    identity: tunnelIdentity,
+                    id: tunnelId,
                     data: {
                         type: 'sdp',
                         data: desc,
@@ -151,17 +151,17 @@ class Tunnel extends EventEmitter {
             }
 
             this.phantom.io.on('tunnel', ({
-                identity,
+                id,
                 data: {
                     type, data,
                 },
             }) => {
 
-                if(identity != tunnelIdentity) {
+                if(id != tunnelId) {
                     return;
                 }
 
-                //console.info('tunnel', identity, type, data);
+                //console.info('tunnel', id, type, data);
 
                 switch(type) {
                 case 'sdp':
@@ -184,7 +184,7 @@ class Tunnel extends EventEmitter {
                                     pc.setLocalDescription(desc);
 
                                     this.phantom.io.emit('tunnel', {
-                                        identity,
+                                        id,
                                         data: {
                                             type: 'sdp',
                                             data: desc,

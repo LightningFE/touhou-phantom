@@ -15,7 +15,7 @@ class TH123ServiceView extends Component {
 
         return (
             <Card>
-                <CardHeader title={ tunnelInfo.serviceName } subtitle={ tunnelInfo.identity } avatar={ stateIcon } />
+                <CardHeader title={ tunnelInfo.serviceName } subtitle={ tunnelInfo.id } avatar={ stateIcon } />
                 {
                     tunnelInfo.role == 'source'
                     ? <div>
