@@ -4,8 +4,6 @@ const { clipboard } = require('electron');
 import React, { Component } from 'react';
 import { Paper, List, ListItem, SelectField, MenuItem, TextField, RaisedButton, CircularProgress } from 'material-ui';
 import IconLink from 'material-ui/svg-icons/content/link';
-import IconDone from 'material-ui/svg-icons/action/done';
-import IconError from 'material-ui/svg-icons/alert/error';
 import IconFace from 'material-ui/svg-icons/action/face';
 import IconWifiTethering from 'material-ui/svg-icons/device/wifi-tethering';
 import IconContentCopy from 'material-ui/svg-icons/content/content-copy';
@@ -99,29 +97,31 @@ export default class TunnelingComponent extends Component {
 
         const tunnelCards = this.state.tunnelInfos.map((tunnelInfo, idx) => {
 
-            let stateIcon = null;
+            let progressMode = null;
+            let progressColor = null;
+            let progressValue = null;
 
             switch(tunnelInfo.state) {
             case Symbol.for('TUNNEL_STATE_STARTED'):
-                stateIcon = (
-                    <CircularProgress mode="determinate" value={ 0 } />
-                );
+                progressMode = 'determinate';
+                progressValue = 0;
                 break;
             case Symbol.for('TUNNEL_STATE_CHECKING'):
-                stateIcon = (
-                    <CircularProgress mode="determinate" value={ 25 } />
-                );
+                progressMode = 'indeterminate';
                 break;
             case Symbol.for('TUNNEL_STATE_CONNECTED'):
-            case Symbol.for('TUNNEL_STATE_DONE'):
-                stateIcon = (
-                    <IconDone />
-                );
+                progressMode = 'determinate';
+                progressValue = 100;
                 break;
             case Symbol.for('TUNNEL_STATE_DISCONNECTED'):
-                stateIcon = (
-                    <IconError />
-                );
+            case Symbol.for('TUNNEL_STATE_FAILED'):
+                progressMode = 'determinate';
+                progressColor = 'red';
+                progressValue = 100;
+                break;
+            default:
+                progressMode = 'indeterminate';
+                progressColor = 'red';
                 break;
             }
 
@@ -138,7 +138,9 @@ export default class TunnelingComponent extends Component {
             const { View } = v;
 
             return (
-                <View tunnelInfo={ tunnelInfo } stateIcon={ stateIcon } onCopyData={ this.copyData.bind(this) } />
+                <View key={ idx } tunnelInfo={ tunnelInfo } stateIcon={
+                    <CircularProgress mode={ progressMode } color={ progressColor } value={ progressValue } />
+                } onCopyData={ this.copyData.bind(this) } />
             );
 
         });
@@ -146,11 +148,9 @@ export default class TunnelingComponent extends Component {
         const serviceItems = services.map(({
             name, service,
         }, idx) => {
-
             return (
                 <MenuItem key={ idx } primaryText={ name } value={ name } />
             );
-
         });
 
         return (

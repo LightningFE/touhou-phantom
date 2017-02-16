@@ -14,8 +14,8 @@ class EchoServiceView extends Component {
         const { tunnelInfo, stateIcon, onCopyData } = this.props;
 
         return (
-            <Card>
-                <CardHeader title="EchoServiceView" />
+            <Card initiallyExpanded={ true }>
+                <CardHeader title={ tunnelInfo.serviceName } subtitle={ tunnelInfo.id } avatar={ stateIcon } actAsExpander={ true } showExpandableButton={ true } />
             </Card>
         );
     }

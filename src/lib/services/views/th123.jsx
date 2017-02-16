@@ -14,25 +14,21 @@ class TH123ServiceView extends Component {
         const { tunnelInfo, stateIcon, onCopyData } = this.props;
 
         return (
-            <Card>
-                <CardHeader title={ tunnelInfo.serviceName } subtitle={ tunnelInfo.id } avatar={ stateIcon } />
+            <Card initiallyExpanded={ true }>
+                <CardHeader title={ tunnelInfo.serviceName } subtitle={ tunnelInfo.id } avatar={ stateIcon } actAsExpander={ true } showExpandableButton={ true } />
                 {
                     tunnelInfo.role == 'source'
-                    ? <div>
-                        <CardText>
-                            <TextField floatingLabelText="使用此地址连接主机" value={ tunnelInfo.data ? tunnelInfo.data.address : '' } inputStyle={{
-                                backgroundImage: `url(${ require('../../../images/ic_content_copy_black_24px.svg') })`,
-                                backgroundRepeat: 'no-repeat',
-                                backgroundAttachment: 'scroll',
-                                backgroundPosition: '98% 50%',
-                            }} fullWidth={ true } onTouchTap={ () => onCopyData(tunnelInfo.data ? tunnelInfo.data.address : '') } />
-                        </CardText>
-                    </div>
-                    : <div>
-                        <CardText>
-                            请启动游戏并在默认端口（10800）建立主机。
-                        </CardText>
-                    </div>
+                    ? <CardText expandable={ true }>
+                        <TextField floatingLabelText="使用此地址连接主机" value={ tunnelInfo.data ? tunnelInfo.data.address : '' } inputStyle={{
+                            backgroundImage: `url(${ require('../../../images/ic_content_copy_black_24px.svg') })`,
+                            backgroundRepeat: 'no-repeat',
+                            backgroundAttachment: 'scroll',
+                            backgroundPosition: '98% 50%',
+                        }} fullWidth={ true } onTouchTap={ () => onCopyData(tunnelInfo.data ? tunnelInfo.data.address : '') } />
+                    </CardText>
+                    : <CardText expandable={ true }>
+                        请启动游戏并在默认端口（10800）建立主机。
+                    </CardText>
                 }
             </Card>
         );

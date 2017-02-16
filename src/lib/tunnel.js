@@ -9,8 +9,8 @@ const { serviceLookup } = require('./services');
 const STATE_STARTED = Symbol.for('TUNNEL_STATE_STARTED');
 const STATE_CHECKING = Symbol.for('TUNNEL_STATE_CHECKING');
 const STATE_CONNECTED = Symbol.for('TUNNEL_STATE_CONNECTED');
-const STATE_DONE = Symbol.for('TUNNEL_STATE_DONE');
 const STATE_DISCONNECTED = Symbol.for('TUNNEL_STATE_DISCONNECTED');
+const STATE_FAILED = Symbol.for('TUNNEL_STATE_FAILED');
 
 class Tunnel extends EventEmitter {
 
@@ -80,7 +80,7 @@ class Tunnel extends EventEmitter {
 
                 pc.ondatachannel = (event) => {
 
-                    console.info('datachannel', event.channel);
+                    console.info('channel receive');
 
                     this.setupChannel(event.channel);
 
@@ -89,6 +89,8 @@ class Tunnel extends EventEmitter {
             }
 
             pc.oniceconnectionstatechange = (event) => {
+
+                console.info('iceConnectionState', pc.iceConnectionState);
 
                 switch(pc.iceConnectionState) {
                 case 'checking':
@@ -100,6 +102,9 @@ class Tunnel extends EventEmitter {
                     break;
                 case 'disconnected':
                     this.setState(STATE_DISCONNECTED);
+                    break;
+                case 'failed':
+                    this.setState(STATE_FAILED);
                     break;
                 }
 
