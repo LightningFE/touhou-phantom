@@ -151,6 +151,7 @@ class Phantom extends EventEmitter {
         this.connected = false;
         this.id = null;
 
+        this.messages = Array(100);
         this.wareInfos = [];
         this.relayInfo = null;
         this.tunnels = [];
@@ -167,12 +168,13 @@ class Phantom extends EventEmitter {
 
     }
 
-    onNewMessage({
-        sender, time, message,
-    }) {
-        this.emit('userMessage', {
-            sender, time, message,
-        });
+    onNewMessage(message) {
+
+        this.messages.shift();
+        this.messages.push(message);
+
+        this.emit('newMessage', message);
+
     }
 
     onRequestTunnel({

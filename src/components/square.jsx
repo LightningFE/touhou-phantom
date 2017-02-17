@@ -7,6 +7,8 @@ const moment = require('moment');
 
 const phantom = require('../phantom');
 
+const NICKNAME_NONAME = 'NONAME';
+
 class ChatView extends Component {
 
     constructor(props) {
@@ -22,13 +24,17 @@ class ChatView extends Component {
 
     componentDidMount() {
 
-        phantom.on('userMessage', this.onMessage);
+        this.setState({
+            messages: [...phantom.messages],
+        });
+
+        phantom.on('newMessage', this.onMessage);
 
     }
 
     componentWillUnmount() {
 
-        phantom.removeListener('userMessage', this.onMessage);
+        phantom.removeListener('newMessage', this.onMessage);
 
     }
 
@@ -59,13 +65,23 @@ class ChatView extends Component {
             }}>
                 <div>
                     {
-                        this.state.messages.map(({
-                            sender, time, message,
-                        }) => {
-                            return (
-                                <p><span>[{ moment(time).format('HH:mm:ss') }]</span> <span>{ sender.nickname }</span>#<span>{ sender.id }</span>: <span>{ message }</span></p>
-                            );
+                        this.state.messages.map((m) => {
+
+                            if(m) {
+
+                                const { sender, time, message } = m;
+
+                                return (
+                                    <p><span>[{ moment(time).format('HH:mm:ss') }]</span> <span>{ sender.nickname ? sender.nickname : NICKNAME_NONAME }</span>#<span>{ sender.id }</span>: <span>{ message }</span></p>
+                                );
+
+                            }
+                            else {
+                                return null;
+                            }
+
                         })
+                        .filter(message => message)
                     }
                 </div>
                 <TextField hintText="按下「回车」发送消息" fullWidth={ true } onKeyDown={ this.onInputKeyDown.bind(this) } />
@@ -148,7 +164,7 @@ export default class SquareComponent extends Component {
         return (
             <Paper>
                 <List>
-                    <ListItem primaryText={ nickname ? nickname : 'NONAME' } secondaryText={ phantom.id } leftAvatar={
+                    <ListItem primaryText={ nickname ? nickname : NICKNAME_NONAME } secondaryText={ phantom.id } leftAvatar={
                         <Avatar src={ require('../images/avatar.jpg') } />
                     } rightIconButton={
                         <IconMenu iconButtonElement={
