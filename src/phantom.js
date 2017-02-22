@@ -130,6 +130,10 @@ class PhantomAPI extends EventEmitter {
         });
     }
 
+    requestCredential() {
+        return this.phantom.io.exec('/api/credentials/request', {});
+    }
+
 }
 
 class Phantom extends EventEmitter {
@@ -187,7 +191,7 @@ class Phantom extends EventEmitter {
 
                 if(accept) {
 
-                    this.createTunnel(null, fromId, tunnelId, serviceName);
+                    this.createTunnel(tunnelId, null, fromId, serviceName);
 
                 }
 
@@ -469,7 +473,7 @@ class Phantom extends EventEmitter {
 
                 if(accept) {
 
-                    this.createTunnel('source', toId, tunnelId, serviceName);
+                    this.createTunnel(tunnelId, 'source', toId, serviceName);
 
                 }
 
@@ -480,27 +484,31 @@ class Phantom extends EventEmitter {
         });
     }
 
-    createTunnel(role, peerId, id, serviceName) {
+    createTunnel(id, role, peerId, serviceName) {
+        return Promise.coroutine(function*() {
 
-        const tunnel = new Tunnel({
-            phantom: this,
-            role, peerId, id, serviceName,
-        });
+            const credentials = yield this.api.requestCredential();
 
-        this.tunnels.push(tunnel);
+            const tunnel = new Tunnel({
+                phantom: this,
+                id, role, peerId, serviceName, credentials,
+            });
 
-        tunnel.on('stateChanged', (state) => {
+            this.tunnels.push(tunnel);
 
-            this.tunnelInfos = this.tunnels.map(({
-                role, peerId, id, serviceName, state, data,
-            }) => new TunnelInfo({
-                role, peerId, id, serviceName, state, data,
-            }));
+            tunnel.on('stateChanged', (state) => {
 
-            this.emit('tunnelStateChanged', this.tunnelInfos);
+                this.tunnelInfos = this.tunnels.map(({
+                    id, role, peerId, serviceName, state, data,
+                }) => new TunnelInfo({
+                    id, role, peerId, serviceName, state, data,
+                }));
 
-        });
+                this.emit('tunnelStateChanged', this.tunnelInfos);
 
+            });
+
+        }.bind(this))();
     }
 
 }

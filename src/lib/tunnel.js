@@ -15,17 +15,18 @@ const STATE_FAILED = Symbol.for('TUNNEL_STATE_FAILED');
 class Tunnel extends EventEmitter {
 
     constructor({
-        phantom, role, peerId, id, serviceName,
+        phantom, id, role, peerId, serviceName, credentials,
     }) {
         super();
 
         // Must have instead of singleton, due to circular require.
         this.phantom = phantom;
 
+        this.id = id;
         this.role = role;
         this.peerId = peerId;
-        this.id = id;
         this.serviceName = serviceName;
+        this.credentials = credentials;
 
         this.state = 'UNKNOWN';
 
@@ -52,10 +53,20 @@ class Tunnel extends EventEmitter {
     setupTunnel(role, peerId, tunnelId) {
         return Promise.coroutine(function*() {
 
+            const iceServers = this.credentials.map(({
+                urls, username, credential,
+            }) => {
+
+                return {
+                    urls, username, credential,
+                };
+
+            });
+
+            console.info('iceServers', iceServers);
+
             const pc = new webkitRTCPeerConnection({
-                iceServers: [{
-                    urls: 'turn:106.185.35.36:3478',
-                }],
+                iceServers,
             });
 
             this.connection = pc;
@@ -141,7 +152,10 @@ class Tunnel extends EventEmitter {
 
             if(role == 'source') {
 
-                const desc = yield pc.createOffer();
+                const desc = yield pc.createOffer({
+                    // FIXME: So we can use relay candidates?
+                    //offerToReceiveAudio: true,
+                });
 
                 pc.setLocalDescription(desc);
 
