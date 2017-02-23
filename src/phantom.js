@@ -8,7 +8,7 @@ const { connect } = require('socket.io-client');
 const Settings = require('./lib/settings');
 const Tunnel = require('./lib/tunnel');
 
-const { confirmEx } = require('./util');
+const { alertEx, confirmEx } = require('./util');
 
 const RELAY_STATE_STARTED = Symbol.for('RELAY_STATE_STARTED');
 const RELAY_STATE_DONE = Symbol.for('RELAY_STATE_DONE');
@@ -97,6 +97,10 @@ class PhantomAPI extends EventEmitter {
         this.phantom.io.expose(name, fn);
     }
 
+    getLatestNotification() {
+        return fetch(`${ this.phantom.remoteUrl }/api/notifications/latest`).then((res) => res.json());
+    }
+
     getClients() {
         return fetch(`${ this.phantom.remoteUrl }/api/clients`).then((res) => res.json());
     }
@@ -130,6 +134,10 @@ class PhantomAPI extends EventEmitter {
         });
     }
 
+    requestCredential() {
+        return this.phantom.io.exec('/api/credentials/request', {});
+    }
+
 }
 
 class Phantom extends EventEmitter {
@@ -151,6 +159,7 @@ class Phantom extends EventEmitter {
         this.connected = false;
         this.id = null;
 
+        this.messages = Array(100);
         this.wareInfos = [];
         this.relayInfo = null;
         this.tunnels = [];
@@ -167,12 +176,13 @@ class Phantom extends EventEmitter {
 
     }
 
-    onNewMessage({
-        sender, time, message,
-    }) {
-        this.emit('userMessage', {
-            sender, time, message,
-        });
+    onNewMessage(message) {
+
+        this.messages.shift();
+        this.messages.push(message);
+
+        this.emit('newMessage', message);
+
     }
 
     onRequestTunnel({
@@ -180,12 +190,14 @@ class Phantom extends EventEmitter {
     }) {
         return new Promise((resolve, reject) => {
 
-            confirmEx(`Tunneling with ${ fromId }?`)
+            confirmEx({
+                message: `Tunneling with ${ fromId }?`,
+            })
             .then((accept) => {
 
                 if(accept) {
 
-                    this.createTunnel(null, fromId, tunnelId, serviceName);
+                    this.createTunnel(tunnelId, null, fromId, serviceName);
 
                 }
 
@@ -202,16 +214,22 @@ class Phantom extends EventEmitter {
     bindEvents() {
 
         this.io.on('connect', () => {
+            Promise.coroutine(function*() {
 
-            this.setConnected(true);
+                this.setConnected(true);
 
-            this.api.newClient()
-            .then(({
-                id,
-            }) => {
+                const { id } = yield this.api.newClient();
                 this.setId(id);
-            });
 
+                const { notification } = yield this.api.getLatestNotification();
+                if(notification) {
+                    alertEx({
+                        title: '公告',
+                        message: notification,
+                    });
+                }
+
+            }.bind(this))();
         });
 
         this.io.on('disconnect', () => {
@@ -467,7 +485,7 @@ class Phantom extends EventEmitter {
 
                 if(accept) {
 
-                    this.createTunnel('source', toId, tunnelId, serviceName);
+                    this.createTunnel(tunnelId, 'source', toId, serviceName);
 
                 }
 
@@ -478,27 +496,31 @@ class Phantom extends EventEmitter {
         });
     }
 
-    createTunnel(role, peerId, id, serviceName) {
+    createTunnel(id, role, peerId, serviceName) {
+        return Promise.coroutine(function*() {
 
-        const tunnel = new Tunnel({
-            phantom: this,
-            role, peerId, id, serviceName,
-        });
+            const credentials = yield this.api.requestCredential();
 
-        this.tunnels.push(tunnel);
+            const tunnel = new Tunnel({
+                phantom: this,
+                id, role, peerId, serviceName, credentials,
+            });
 
-        tunnel.on('stateChanged', (state) => {
+            this.tunnels.push(tunnel);
 
-            this.tunnelInfos = this.tunnels.map(({
-                role, peerId, id, serviceName, state, data,
-            }) => new TunnelInfo({
-                role, peerId, id, serviceName, state, data,
-            }));
+            tunnel.on('stateChanged', (state) => {
 
-            this.emit('tunnelStateChanged', this.tunnelInfos);
+                this.tunnelInfos = this.tunnels.map(({
+                    id, role, peerId, serviceName, state, data,
+                }) => new TunnelInfo({
+                    id, role, peerId, serviceName, state, data,
+                }));
 
-        });
+                this.emit('tunnelStateChanged', this.tunnelInfos);
 
+            });
+
+        }.bind(this))();
     }
 
 }

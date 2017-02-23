@@ -1,6 +1,6 @@
 
 import React, { Component } from 'react';
-import { Card, CardHeader, CardText, CardActions, RaisedButton } from 'material-ui';
+import { Card, CardHeader, CardText, CardActions, TextField, RaisedButton } from 'material-ui';
 
 class TH123ServiceView extends Component {
 
@@ -14,24 +14,21 @@ class TH123ServiceView extends Component {
         const { tunnelInfo, stateIcon, onCopyData } = this.props;
 
         return (
-            <Card>
-                <CardHeader title={ tunnelInfo.serviceName } subtitle={ tunnelInfo.id } avatar={ stateIcon } />
+            <Card initiallyExpanded={ true }>
+                <CardHeader title={ tunnelInfo.serviceName } subtitle={ tunnelInfo.id } avatar={ stateIcon } actAsExpander={ true } showExpandableButton={ true } />
                 {
                     tunnelInfo.role == 'source'
-                    ? <div>
-                        <CardText>
-                            请使用此地址连接主机：<br />
-                            { tunnelInfo.data ? tunnelInfo.data.address : 'UNKNOWN' }
-                        </CardText>
-                        <CardActions>
-                            <RaisedButton onTouchTap={ () => onCopyData(tunnelInfo.data ? tunnelInfo.data.address : '') }>复制地址</RaisedButton>
-                        </CardActions>
-                    </div>
-                    : <div>
-                        <CardText>
-                            请启动游戏并在默认端口（10800）建立主机。
-                        </CardText>
-                    </div>
+                    ? <CardText expandable={ true }>
+                        <TextField floatingLabelText="使用此地址连接主机" value={ tunnelInfo.data ? tunnelInfo.data.address : '' } inputStyle={{
+                            backgroundImage: `url(${ require('../../../images/ic_content_copy_black_24px.svg') })`,
+                            backgroundRepeat: 'no-repeat',
+                            backgroundAttachment: 'scroll',
+                            backgroundPosition: '98% 50%',
+                        }} fullWidth={ true } onTouchTap={ () => onCopyData(tunnelInfo.data ? tunnelInfo.data.address : '') } />
+                    </CardText>
+                    : <CardText expandable={ true }>
+                        请启动游戏并在默认端口（10800）建立主机。
+                    </CardText>
                 }
             </Card>
         );

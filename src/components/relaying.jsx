@@ -121,7 +121,9 @@ export default class RelayingComponent extends Component {
 
         clipboard.writeText(address);
 
-        alertEx(`「${ address }」已经复制到剪贴板。`);
+        alertEx({
+            message: `「${ address }」已经复制到剪贴板。`,
+        });
 
     }
 
@@ -162,7 +164,7 @@ export default class RelayingComponent extends Component {
                 </div>
                 <div>
                     <div>
-                        <TextField hintText="点击「中转」获取中转地址" errorText={ relayState }  value={ this.state.relayInfo && this.state.relayInfo.port > 0 ? `${ this.state.relayInfo.address }:${ this.state.relayInfo.port }` : '' } errorStyle={{
+                        <TextField hintText="点击「中转」获取中转地址" errorText={ relayState } value={ this.state.relayInfo && this.state.relayInfo.port > 0 ? `${ this.state.relayInfo.address }:${ this.state.relayInfo.port }` : '' } errorStyle={{
                             color: 'rgb(0, 188, 212)',
                         }} inputStyle={{
                             backgroundImage: `url(${ require('../images/ic_content_copy_black_24px.svg') })`,

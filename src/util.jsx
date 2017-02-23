@@ -6,15 +6,17 @@ import { Dialog, Snackbar, RaisedButton } from 'material-ui';
 const { EventEmitter } = require('events');
 const { randomBytes } = require('crypto');
 
-export function alertEx(message) {
+export function alertEx({
+    title = 'Phantom',
+    message,
+}) {
     return new Promise((resolve, reject) => {
 
         const id = randomBytes(8).toString('utf-8');
 
         emitter.emit('dialog', {
             id: id,
-            title: 'Phantom',
-            message: message,
+            title, message,
             buttons: [ '确定' ],
             cancelId: 0,
         });
@@ -24,15 +26,17 @@ export function alertEx(message) {
     });
 }
 
-export function confirmEx(message) {
+export function confirmEx({
+    title = 'Phantom',
+    message,
+}) {
     return new Promise((resolve, reject) => {
 
         const id = randomBytes(8).toString('utf-8');
 
         emitter.emit('dialog', {
             id: id,
-            title: 'Phantom',
-            message: message,
+            title, message,
             buttons: [ '是', '否' ],
             cancelId: 1,
         });

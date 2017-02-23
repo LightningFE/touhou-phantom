@@ -9,23 +9,24 @@ const { serviceLookup } = require('./services');
 const STATE_STARTED = Symbol.for('TUNNEL_STATE_STARTED');
 const STATE_CHECKING = Symbol.for('TUNNEL_STATE_CHECKING');
 const STATE_CONNECTED = Symbol.for('TUNNEL_STATE_CONNECTED');
-const STATE_DONE = Symbol.for('TUNNEL_STATE_DONE');
 const STATE_DISCONNECTED = Symbol.for('TUNNEL_STATE_DISCONNECTED');
+const STATE_FAILED = Symbol.for('TUNNEL_STATE_FAILED');
 
 class Tunnel extends EventEmitter {
 
     constructor({
-        phantom, role, peerId, id, serviceName,
+        phantom, id, role, peerId, serviceName, credentials,
     }) {
         super();
 
         // Must have instead of singleton, due to circular require.
         this.phantom = phantom;
 
+        this.id = id;
         this.role = role;
         this.peerId = peerId;
-        this.id = id;
         this.serviceName = serviceName;
+        this.credentials = credentials;
 
         this.state = 'UNKNOWN';
 
@@ -52,10 +53,20 @@ class Tunnel extends EventEmitter {
     setupTunnel(role, peerId, tunnelId) {
         return Promise.coroutine(function*() {
 
+            const iceServers = this.credentials.map(({
+                urls, username, credential,
+            }) => {
+
+                return {
+                    urls, username, credential,
+                };
+
+            });
+
+            console.info('iceServers', iceServers);
+
             const pc = new webkitRTCPeerConnection({
-                iceServers: [{
-                    urls: 'turn:106.185.35.36:3478',
-                }],
+                iceServers,
             });
 
             this.connection = pc;
@@ -80,7 +91,7 @@ class Tunnel extends EventEmitter {
 
                 pc.ondatachannel = (event) => {
 
-                    console.info('datachannel', event.channel);
+                    console.info('channel receive');
 
                     this.setupChannel(event.channel);
 
@@ -89,6 +100,8 @@ class Tunnel extends EventEmitter {
             }
 
             pc.oniceconnectionstatechange = (event) => {
+
+                console.info('iceConnectionState', pc.iceConnectionState);
 
                 switch(pc.iceConnectionState) {
                 case 'checking':
@@ -100,6 +113,9 @@ class Tunnel extends EventEmitter {
                     break;
                 case 'disconnected':
                     this.setState(STATE_DISCONNECTED);
+                    break;
+                case 'failed':
+                    this.setState(STATE_FAILED);
                     break;
                 }
 
@@ -136,7 +152,10 @@ class Tunnel extends EventEmitter {
 
             if(role == 'source') {
 
-                const desc = yield pc.createOffer();
+                const desc = yield pc.createOffer({
+                    // FIXME: So we can use relay candidates?
+                    //offerToReceiveAudio: true,
+                });
 
                 pc.setLocalDescription(desc);
 
