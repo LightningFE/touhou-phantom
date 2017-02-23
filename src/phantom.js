@@ -8,7 +8,7 @@ const { connect } = require('socket.io-client');
 const Settings = require('./lib/settings');
 const Tunnel = require('./lib/tunnel');
 
-const { confirmEx } = require('./util');
+const { alertEx, confirmEx } = require('./util');
 
 const RELAY_STATE_STARTED = Symbol.for('RELAY_STATE_STARTED');
 const RELAY_STATE_DONE = Symbol.for('RELAY_STATE_DONE');
@@ -95,6 +95,10 @@ class PhantomAPI extends EventEmitter {
 
     expose(name, fn) {
         this.phantom.io.expose(name, fn);
+    }
+
+    getLatestNotification() {
+        return fetch(`${ this.phantom.remoteUrl }/api/notifications/latest`).then((res) => res.json());
     }
 
     getClients() {
@@ -186,7 +190,9 @@ class Phantom extends EventEmitter {
     }) {
         return new Promise((resolve, reject) => {
 
-            confirmEx(`Tunneling with ${ fromId }?`)
+            confirmEx({
+                message: `Tunneling with ${ fromId }?`,
+            })
             .then((accept) => {
 
                 if(accept) {
@@ -208,16 +214,22 @@ class Phantom extends EventEmitter {
     bindEvents() {
 
         this.io.on('connect', () => {
+            Promise.coroutine(function*() {
 
-            this.setConnected(true);
+                this.setConnected(true);
 
-            this.api.newClient()
-            .then(({
-                id,
-            }) => {
+                const { id } = yield this.api.newClient();
                 this.setId(id);
-            });
 
+                const { notification } = yield this.api.getLatestNotification();
+                if(notification) {
+                    alertEx({
+                        title: '公告',
+                        message: notification,
+                    });
+                }
+
+            }.bind(this))();
         });
 
         this.io.on('disconnect', () => {

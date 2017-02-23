@@ -48,12 +48,16 @@ export default class TunnelingComponent extends Component {
 
             clipboard.writeText(data);
 
-            alertEx(`「${ data }」已经复制到剪贴板。`);
+            alertEx({
+                message: `「${ data }」已经复制到剪贴板。`,
+            });
 
         }
         else {
 
-            alertEx(`Nothing is copied.`);
+            alertEx({
+                message: `Nothing is copied.`,
+            });
 
         }
 
@@ -87,7 +91,9 @@ export default class TunnelingComponent extends Component {
                 tunnelBooting: false,
             });
 
-            alertEx(`${ accept ? 'Accepted' : 'Denied' }.`);
+            alertEx({
+                message: `${ accept ? 'Accepted' : 'Denied' }.`,
+            });
 
         });
 

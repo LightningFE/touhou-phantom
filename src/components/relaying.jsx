@@ -121,7 +121,9 @@ export default class RelayingComponent extends Component {
 
         clipboard.writeText(address);
 
-        alertEx(`「${ address }」已经复制到剪贴板。`);
+        alertEx({
+            message: `「${ address }」已经复制到剪贴板。`,
+        });
 
     }
 
