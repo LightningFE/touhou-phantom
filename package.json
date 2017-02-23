@@ -1,6 +1,6 @@
 {
   "name": "phantom",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "Phantom",
   "main": "main.js",
   "scripts": {

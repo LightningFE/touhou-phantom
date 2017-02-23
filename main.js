@@ -32,7 +32,7 @@ function openWindow() {
 function checkUpdate() {
 
 	const autoUpdater = new NsisAutoUpdater({
-		baseUrl: 'http://tldr.run:1337/',
+		baseUrl: 'http://phantom.tldr.run:1337/',
 		channel: 'latest',
 	});
 
